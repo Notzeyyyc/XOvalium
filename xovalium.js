@@ -1,28 +1,11 @@
+import "./server.js";
 import { connectbot } from "./config/auth.js";
 import { config } from "./config/settings.js";
 import { connectToWhatsApp } from "./plugins/baileys.js";
-import express from "express";
 import os from "os";
-import path from "path";
 
-const app = express();
 const bot = connectbot();
-
-// Active sessions track
 const activeSessions = new Map();
-
-import { fileURLToPath } from 'url';
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-app.use(express.static(path.join(__dirname, 'public')));
-
-app.listen(config.app.port, () => {
-    console.log(`[ SERVER ] Dashboard running at ${config.app.urlWeb}:${config.app.port}`);
-});
 
 /**
  * Sends a premium dashboard message

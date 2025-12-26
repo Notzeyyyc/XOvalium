@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="description" content="A new web page">
+    <meta name="robots" content="index, follow">
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="fonts.css">
+    <link rel="stylesheet" href="transitions.css">
+    <script src="./transitions.js" defer></script>
+    <script src="../backend/antiClick.js"></script>
+    <title>Document</title>
+    <style type="text/tailwindcss">
+            @theme {
+                /* Base */
+                --color-background: #000000; /* deep charcoal */
+                --color-surface: #101010; /* slightly lighter panel */
+                --color-surface-alt: #242424; /* alt surface untuk layering */
+                --color-text: #e5e5e5; /* soft white */
+                --color-text-secondary: #9ca3af; /* cool gray */
+
+                /* Accent modern */
+                --color-accent-cyan: #06b6d4; /* cyan neon */
+                --color-accent-violet: #7c3aed; /* violet vibrant */
+                --color-accent-lime: #84cc16; /* lime fresh */
+
+                /* Status */
+                --color-error: #f87171; /* soft red */
+                --color-warning: #fbbf24; /* amber */
+                --color-success: #34d399; /* emerald */
+
+                /* Extra modern touch */
+                --color-border: #0f0f0f; /* subtle border */
+                --color-highlight: #3b82f6; /* electric blue highlight */
+            }
+      </style>
+</head>
+<body class="bg-background">
+  <nav class="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-surface border border-border rounded-full shadow-xl px-6 py-3 flex space-x-6">
+        <a href="index.html">
+          <span class="material-symbols-outlined text-white mt-2">home</span>
+        </a>
+        <a href="membership.html">
+          <span class="material-symbols-outlined text-white mt-2">card_membership</span>
+        </a>
+        <a href="settings.html">
+          <span class="material-symbols-outlined text-white mt-2">settings</span>
+        </a>
+      </nav>
+      <dic class="mt-18 flex items-center justify-center animate-scale-in">
+        <div class="relative transform -translate-y-12 rounded-xl shadow-lg overflow-hidden">
+          <img src="https://files.catbox.moe/4ykwee.png" alt="Potrait" class="h-auto w-full object-cover">
+          <div class="absolute bottom-0 left-0 w-full h-1/4 bg-gradient-to-t from-black/78 to-transparent"></div>
+        </div>
+      </dic>
+      <div class="flex items-center justify-center">
+        <div class="grid grid-cols-2 gap-4 w-110">
+          <div class="h-23 bg-surface rounded-2xl overflow-hidden p-3 flex flex-col items-start animate-slide-up delay-200">
+            
+          </div>
+        </div>
+      </div>
+</body>
+</html>

@@ -10,6 +10,7 @@
         <link rel="stylesheet" href="./transitions.css">
         <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
         <script src="./transitions.js" defer></script>
+        <script src="../backend/antiClick.js"></script>
         <title>Document</title>
         <style type="text/tailwindcss">
             @theme {
@@ -39,11 +40,13 @@
     <body class="bg-background sm:p-6 md:p-8">
       <nav class="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-surface border border-border rounded-full shadow-xl px-6 py-3 flex space-x-6">
         <a href="index.html">
-          <img src="https://files.catbox.moe/wp62fc.png" alt="Home" class="w-10 h-10 hover:opacity-80">
+          <span class="material-symbols-outlined text-white mt-2">home</span>
+        </a>
+        <a href="membership.html">
+          <span class="material-symbols-outlined text-white mt-2">card_membership</span>
         </a>
         <a href="settings.html">
-          <img src="https://files.catbox.moe/nwnkp7.png" alt="settings" class="w-10 h-10 hover:opacity-80">
-          <p class="text-white text-sm font-mono">Settings</p>
+          <span class="material-symbols-outlined text-white mt-2">settings</span>
         </a>
       </nav>
       <div class="mt-18 flex items-center justify-center animate-scale-in">
@@ -63,7 +66,7 @@
             <span class="material-symbols-outlined text-white mr-2">developer_board</span>
                 <p class="text-white font-semibold">Status</p>
               </div>
-              <p class="text-pink-600 font-mono text-sm">{ONLINE}</p>
+              <p class="text-pink-600 font-mono text-sm">ONLINE — Production</p>
            </div>
            <div class="h-23 bg-surface rounded-2xl overflow-hidden p-3 flex flex-col items-start animate-slide-up delay-300">
              <div class="flex items-center mb-3">

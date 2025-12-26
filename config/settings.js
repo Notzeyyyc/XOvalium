@@ -1,7 +1,7 @@
 export const config = {
     telegram: {
-        token: "8049788514:AAG3enGiApa90crTNGcFOsVoPIVoigRPChM", // Placeholder, user will fill this
-        Apiurl: "https://api.telegram.org"
+        token: "8162246093:AAEfatLT5TRTjfsOEOYk1wzhGoFmb57fR3g",
+        apiUrl: "https://api.telegram.org"
     },
     app: {
         name: "XOVALIUM DASHBOARD",
