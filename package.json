@@ -15,9 +15,11 @@
     "@hapi/boom": "^10.0.1",
     "@rexxhayanasi/elaina-baileys": "^1.1.4",
     "chalk": "^5.6.2",
+    "cookie-parser": "^1.4.7",
     "express": "^5.2.1",
     "is-buffer": "^2.0.5",
     "jimp": "^0.22.12",
+    "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.0.2",
     "node-telegram-bot-api": "^0.67.0",
     "pino": "^10.1.0"

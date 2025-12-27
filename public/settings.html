@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="./transitions.css">
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="./transitions.js" defer></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
     <style type="text/tailwindcss">
         @theme {
                 /* Base */
@@ -27,55 +28,103 @@
                 --color-success: #34d399; /* emerald */
 
                 /* Extra modern touch */
-                --color-border: #0f0f0f; /* subtle border */
+                --color-border: #1a1a1a; /* subtle border */
                 --color-highlight: #3b82f6; /* electric blue highlight */
             }
         </style>
-    <title>settings</title>
+    <title>Settings | XOvalium</title>
 </head>
-<body class="bg-background">
-    <div class="px-6 py-10">
-        <h1 class="text-3xl font-bold text-white bbh-hegarty-regular animate-slide-up">Settings</h1>
-        <p class="text-gray-400 mt-2 animate-slide-up delay-100">Configure your XOvalium experience</p>
+<body class="bg-background text-white pb-24">
+    <div class="px-6 py-12">
+        <header class="mb-10 text-center">
+            <h1 class="text-3xl font-bold bg-gradient-to-r from-white to-gray-500 bg-clip-text text-transparent">Settings</h1>
+            <p class="text-gray-500 mt-2">Personalize your dashboard experience</p>
+        </header>
         
-        <div class="mt-8 space-y-4">
-            <div class="bg-surface border border-border p-4 rounded-2xl flex items-center justify-between animate-slide-up delay-200">
-                <div class="flex items-center space-x-4">
-                    <span class="material-symbols-outlined text-accent-cyan">notifications</span>
-                    <span class="text-white">Notifications</span>
+        <div class="space-y-6">
+            <!-- Account Section -->
+            <div class="space-y-3">
+                <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest ml-2">App Preferences</h3>
+                
+                <div class="bg-surface border border-border p-5 rounded-2xl flex items-center justify-between animate-slide-up delay-200">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-10 h-10 rounded-xl bg-accent-cyan/10 flex items-center justify-center text-accent-cyan">
+                            <span class="material-symbols-outlined">notifications</span>
+                        </div>
+                        <span class="font-medium">Notifications</span>
+                    </div>
+                    <div class="w-10 h-5 bg-accent-cyan/20 rounded-full relative cursor-pointer">
+                        <div class="absolute right-1 top-1 w-3 h-3 bg-accent-cyan rounded-full shadow-[0_0_8px_rgba(6,182,212,0.5)]"></div>
+                    </div>
                 </div>
-                <div class="w-12 h-6 bg-accent-violet/30 rounded-full relative">
-                    <div class="absolute right-1 top-1 w-4 h-4 bg-accent-violet rounded-full"></div>
+                
+                <div class="bg-surface border border-border p-5 rounded-2xl flex items-center justify-between animate-slide-up delay-300">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-10 h-10 rounded-xl bg-accent-lime/10 flex items-center justify-center text-accent-lime">
+                            <span class="material-symbols-outlined">security</span>
+                        </div>
+                        <span class="font-medium">Privacy Mode</span>
+                    </div>
+                    <span class="material-symbols-outlined text-gray-700">chevron_right</span>
                 </div>
-            </div>
-            
-            <div class="bg-surface border border-border p-4 rounded-2xl flex items-center justify-between animate-slide-up delay-300">
-                <div class="flex items-center space-x-4">
-                    <span class="material-symbols-outlined text-accent-lime">security</span>
-                    <span class="text-white">Privacy & Security</span>
+
+                <div class="bg-surface border border-border p-5 rounded-2xl flex items-center justify-between animate-slide-up delay-400">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-10 h-10 rounded-xl bg-accent-violet/10 flex items-center justify-center text-accent-violet">
+                            <span class="material-symbols-outlined">language</span>
+                        </div>
+                        <span class="font-medium">App Language</span>
+                    </div>
+                    <span class="text-accent-violet text-sm font-bold">id-ID</span>
                 </div>
-                <span class="material-symbols-outlined text-gray-500">chevron_right</span>
             </div>
 
-            <div class="bg-surface border border-border p-4 rounded-2xl flex items-center justify-between animate-slide-up delay-400">
-                <div class="flex items-center space-x-4">
-                    <span class="material-symbols-outlined text-accent-cyan">language</span>
-                    <span class="text-white">App Language</span>
-                </div>
-                <span class="text-accent-cyan text-sm">Indonesia</span>
+            <!-- Session Section -->
+            <div class="space-y-3 pt-6">
+                <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest ml-2">Account Session</h3>
+                
+                <a href="/logout" class="bg-surface border border-red-900/20 p-5 rounded-2xl flex items-center justify-between animate-scale-in group hover:bg-red-950/10 transition-colors">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center text-red-500 group-hover:scale-110 transition-transform">
+                            <span class="material-symbols-outlined">logout</span>
+                        </div>
+                        <div>
+                            <span class="font-bold text-red-500">Log Out</span>
+                            <p class="text-[10px] text-gray-600">Terminate current session</p>
+                        </div>
+                    </div>
+                    <span class="material-symbols-outlined text-red-900/50">power_settings_new</span>
+                </a>
+            </div>
+
+            <div class="text-center pt-10 animate-fade-in delay-500">
+                <p class="text-[10px] text-gray-700 uppercase tracking-[0.2em]">XOvalium Dashboard v1.2.0</p>
+                <p class="text-[10px] text-gray-800 mt-1">Built by Ovalium Technology</p>
             </div>
         </div>
     </div>
-      <nav class="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-surface border border-border rounded-full shadow-xl px-6 py-3 flex space-x-6">
+
+    <!-- Navigation -->
+    <nav class="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-surface border border-border rounded-full shadow-xl px-6 py-3 flex space-x-6 z-50">
         <a href="index.html">
-          <span class="material-symbols-outlined text-white mt-2">home</span>
+            <span class="material-symbols-outlined text-gray-500 hover:text-white transition-colors mt-1">home</span>
+        </a>
+        <a href="blast.html">
+          <span class="material-symbols-outlined text-white">android</span>
         </a>
         <a href="membership.html">
-          <span class="material-symbols-outlined text-white mt-2">card_membership</span>
+            <span class="material-symbols-outlined text-gray-500 hover:text-white transition-colors mt-1">card_membership</span>
         </a>
         <a href="settings.html">
-          <span class="material-symbols-outlined text-white mt-2">settings</span>
+            <span class="material-symbols-outlined text-white mt-1">settings</span>
         </a>
-      </nav>
+    </nav>
+
+    <script>
+        // Check session info if needed
+        document.addEventListener('DOMContentLoaded', async () => {
+             // Optional: Add logic to show current profile info here
+        });
+    </script>
 </body>
 </html>

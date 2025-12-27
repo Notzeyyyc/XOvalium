@@ -8,12 +8,30 @@
         <meta name="robots" content="index, follow" />
         <link rel="stylesheet" href="./fonts.css">
         <link rel="stylesheet" href="./transitions.css">
-        <script src="https://telegram.org/js/telegram-web-app.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-        <script src="./js/auth.js" defer></script>
         <script src="./transitions.js" defer></script>
         <script src="../backend/antiClick.js"></script>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
         <title>XOvalium Dashboard</title>
+        <script>
+            document.addEventListener('DOMContentLoaded', async () => {
+                try {
+                    const res = await fetch('/api/user/me');
+                    const data = await res.json();
+                    if (data.success) {
+                        const user = data.user;
+                        document.getElementById('userDisplay').innerHTML = `
+                            <div class="flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-1.5 rounded-full mt-4">
+                                <span class="w-2 h-2 rounded-full ${user.role === 'owner' ? 'bg-amber-500' : 'bg-green-500'} animate-pulse"></span>
+                                <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400">${user.role}</span>
+                                <span class="text-[10px] text-gray-600">|</span>
+                                <span class="text-[10px] font-mono text-gray-500">${user.telegramId}</span>
+                            </div>
+                        `;
+                    }
+                } catch(e) {}
+            });
+        </script>
         <style type="text/tailwindcss">
             @theme {
                 /* Base */
@@ -44,6 +62,8 @@
         <a href="index.html">
           <span class="material-symbols-outlined text-white mt-2">home</span>
         </a>
+        <a href="blast.html">
+          <span class="material-symbols-outlined text-white mt-2">android</span>        </a>
         <a href="membership.html">
           <span class="material-symbols-outlined text-white mt-2">card_membership</span>
         </a>
@@ -60,6 +80,7 @@
       <div class="px-6 animate-slide-up delay-100">
         <h2 class="text-2xl bbh-hegarty-regular text-white">XOvalium</h2>
         <p class="mt-2 text-sm font-mono text-gray-300">Powered By Debian</p>
+        <div id="userDisplay"></div>
       </div>
       <div class="mt-6 flex items-center justify-center">
         <div class="grid grid-cols-2 gap-4 w-110">

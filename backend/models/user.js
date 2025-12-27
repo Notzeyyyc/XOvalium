@@ -7,25 +7,27 @@ const userSchema = new mongoose.Schema({
         unique: true
     },
     username: String,
-    firstName: String,
-    lastName: String,
     role: {
         type: String,
-        enum: ['user', 'vip', 'admin'],
+        enum: ['user', 'developer', 'owner'],
         default: 'user'
     },
-    isAuth: {
+    otp: String,
+    otpExpiry: Date,
+    isVerified: {
         type: Boolean,
         default: false
     },
-    lastLogin: {
+    membership: {
+        type: String,
+        enum: ['free', 'premium', 'vip', 'lifetime'],
+        default: 'free'
+    },
+    membershipExpiry: {
         type: Date,
-        default: Date.now
+        default: null
     },
-    binanceAccount: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Binance'
-    },
+    lastLogin: Date,
     createdAt: {
         type: Date,
         default: Date.now
@@ -33,5 +35,4 @@ const userSchema = new mongoose.Schema({
 });
 
 const User = mongoose.model('User', userSchema);
-
 export default User;

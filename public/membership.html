@@ -3,68 +3,118 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="description" content="A new web page">
-    <meta name="robots" content="index, follow">
+    <title>Membership | XOvalium</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link rel="stylesheet" href="fonts.css">
     <link rel="stylesheet" href="transitions.css">
     <script src="./transitions.js" defer></script>
     <script src="../backend/antiClick.js"></script>
-    <title>Document</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
     <style type="text/tailwindcss">
-            @theme {
-                /* Base */
-                --color-background: #000000; /* deep charcoal */
-                --color-surface: #101010; /* slightly lighter panel */
-                --color-surface-alt: #242424; /* alt surface untuk layering */
-                --color-text: #e5e5e5; /* soft white */
-                --color-text-secondary: #9ca3af; /* cool gray */
-
-                /* Accent modern */
-                --color-accent-cyan: #06b6d4; /* cyan neon */
-                --color-accent-violet: #7c3aed; /* violet vibrant */
-                --color-accent-lime: #84cc16; /* lime fresh */
-
-                /* Status */
-                --color-error: #f87171; /* soft red */
-                --color-warning: #fbbf24; /* amber */
-                --color-success: #34d399; /* emerald */
-
-                /* Extra modern touch */
-                --color-border: #0f0f0f; /* subtle border */
-                --color-highlight: #3b82f6; /* electric blue highlight */
-            }
-      </style>
+        @theme {
+            --color-background: #000000;
+            --color-surface: #101010;
+            --color-border: #1a1a1a;
+            --color-accent: #06b6d4;
+        }
+        .membership-card {
+            background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .vip-card {
+            background: linear-gradient(135deg, #242424 0%, #1a1a1a 100%);
+            border: 1px solid rgba(251, 191, 36, 0.3);
+        }
+    </style>
 </head>
-<body class="bg-background">
-  <nav class="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-surface border border-border rounded-full shadow-xl px-6 py-3 flex space-x-6">
-        <a href="index.html">
-          <span class="material-symbols-outlined text-white mt-2">home</span>
-        </a>
-        <a href="membership.html">
-          <span class="material-symbols-outlined text-white mt-2">card_membership</span>
-        </a>
-        <a href="settings.html">
-          <span class="material-symbols-outlined text-white mt-2">settings</span>
-        </a>
-      </nav>
-      <dic class="mt-18 flex items-center justify-center animate-scale-in">
-        <div class="relative transform -translate-y-12 rounded-xl shadow-lg overflow-hidden">
-          <img src="https://files.catbox.moe/4ykwee.png" alt="Potrait" class="h-auto w-full object-cover">
-          <div class="absolute bottom-0 left-0 w-full h-1/4 bg-gradient-to-t from-black/78 to-transparent"></div>
-        </div>
-      </dic>
-      <div class="flex items-center justify-center">
-        <div class="grid grid-cols-2 gap-4 w-110">
-          <div class="h-23 bg-surface rounded-2xl overflow-hidden p-3 flex flex-col items-start animate-slide-up delay-200">
-            <div class="flex items-center justify-between mb-3">
-              <span class="material-symbols-outlined text-white mr-2">account_balance</span>
-              <p class="text-white font-semibold">Binance</p>
+<body class="bg-background text-white pb-24">
+    <nav class="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-surface border border-border rounded-full shadow-xl px-6 py-3 flex space-x-6 z-50">
+        <a href="index.html"><span class="material-symbols-outlined text-gray-500 hover:text-white transition-colors">home</span></a>
+        <a href="blast.html"><span class="material-symbols-outlined text-white">android</span></a>
+        <a href="membership.html"><span class="material-symbols-outlined text-white">card_membership</span></a>
+        <a href="settings.html"><span class="material-symbols-outlined text-gray-500 hover:text-white transition-colors">settings</span></a>
+    </nav>
+    <div class="mb-18 px-6 pt-12 animate-fade-in">
+        <!-- Current Status Card -->
+        <div id="statusCard" class="membership-card rounded-3xl p-8 mb-8 relative overflow-hidden">
+            <div id="cardDeco" class="absolute -right-4 -top-4 w-24 h-24 bg-accent/10 blur-3xl rounded-full"></div>
+            
+            <div class="flex items-center justify-between mb-6">
+                <span class="text-gray-400 text-sm font-medium uppercase tracking-widest">Current Plan</span>
+                <span id="roleBadge" class="bg-white/5 border border-white/10 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-tighter">USER</span>
             </div>
-            <p id="Binance" class="text-pink-600 font-mono">{1.000 - OvaCoin}</p>
-          </div>
+
+            <h2 id="membershipName" class="text-4xl font-bold mb-1">FREE</h2>
+            <p id="expiryInfo" class="text-gray-500 text-sm">No active duration</p>
+
+            <div class="mt-8 pt-6 border-t border-white/5 flex items-center gap-4">
+                <div class="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center text-accent">
+                    <span class="material-symbols-outlined text-sm">verified_user</span>
+                </div>
+                <div>
+                    <p class="text-[10px] text-gray-500 uppercase font-bold">Account ID</p>
+                    <p id="userTgId" class="text-xs font-mono text-gray-300">Loading...</p>
+                </div>
+            </div>
         </div>
-      </div>
+
+        <!-- Plans -->
+        <div class="space-y-4">
+            <h3 class="text-sm font-bold text-gray-500 uppercase tracking-widest ml-2">Available Plans</h3>
+            
+            <div class="membership-card rounded-2xl p-5 flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center text-purple-400">
+                        <span class="material-symbols-outlined">diamond</span>
+                    </div>
+                    <div>
+                        <h4 class="font-bold">Premium VIP</h4>
+                        <p class="text-xs text-gray-500">Access to all AI features</p>
+                    </div>
+                </div>
+                <button class="bg-white text-black text-xs font-bold px-4 py-2 rounded-lg" onclick="window.open('https://t.me/notzeyyc')">UPGRADE</button>
+            </div>
+            <div class="membership-card rounded-2xl p-5 flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-500">
+                        <span class="material-symbols-outlined">star</span>
+                    </div>
+                    <div>
+                        <h4 class="font-bold">XOvalium Lifetime</h4>
+                        <p class="text-xs text-gray-500">Pay once, own forever</p>
+                    </div>
+                </div>
+                <button class="bg-amber-500 text-black text-xs font-bold px-4 py-2 rounded-lg" onclick="window.open('https://t.me/notzeyyc')">LIFETIME</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const res = await fetch('/api/user/me');
+                const data = await res.json();
+                
+                if (data.success) {
+                    const user = data.user;
+                    document.getElementById('userTgId').innerText = user.telegramId;
+                    document.getElementById('membershipName').innerText = user.membership.toUpperCase();
+                    document.getElementById('roleBadge').innerText = user.role.toUpperCase();
+                    
+                    if (user.role === 'owner' || user.role === 'developer') {
+                        document.getElementById('statusCard').classList.remove('membership-card');
+                        document.getElementById('statusCard').classList.add('vip-card');
+                        document.getElementById('roleBadge').classList.add('bg-amber-500/20', 'text-amber-500', 'border-amber-500/30');
+                        document.getElementById('expiryInfo').innerText = "Unlimited Access Granted";
+                    } else if (user.membershipExpiry) {
+                        const date = new Date(user.membershipExpiry).toLocaleDateString();
+                        document.getElementById('expiryInfo').innerText = `Valid until ${date}`;
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to load user info:", err);
+            }
+        });
+    </script>
 </body>
 </html>
