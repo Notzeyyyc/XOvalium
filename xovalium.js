@@ -3,6 +3,7 @@ import { connectbot } from "./config/auth.js";
 import { config } from "./config/settings.js";
 import { connectToWhatsApp } from "./plugins/baileys.js";
 import connectDB from "./backend/db.js";
+import User from "./backend/models/user.js";
 import os from "os";
 
 // Connect to MongoDB
@@ -15,87 +16,54 @@ const activeSessions = new Map();
  * Sends a premium dashboard message
  */
 async function sendStartMessage(chatId, username) {
-    const uptime = formatUptime(process.uptime());
-    const ram = (os.totalmem() / 1024 / 1024 / 1024).toFixed(2);
-    const freeRam = (os.freemem() / 1024 / 1024 / 1024).toFixed(2);
+    let user = await User.findOne({ telegramId: chatId.toString() });
+    
+    // Auto-create user if record doesn't exist
+    if (!user) {
+        user = await User.create({ 
+            telegramId: chatId.toString(), 
+            username: username,
+            membership: 'free',
+            role: 'user'
+        });
+    }
+
+    const membershipTag = user.membership.toUpperCase();
+    const roleTag = user.role.toUpperCase();
 
     const caption = `
-╭━━━━〔 🛠️ **${config.app.name}** 〕━━━━╮
-┃
-┃  👋 **Hello, ${username}!**
-┃  Welcome to the central control panel.
-┃
-┣━━〔 📊 **SERVER STATUS** 〕━━
-┃  » **Status:** 🟢 Online
-┃  » **Express:** Listening on port ${config.app.port}
-┃  » **Uptime:** ${uptime}
-┃  » **RAM:** ${freeRam}GB / ${ram}GB
-┃
-┣━━〔 🚀 **APP INFO** 〕━━
-┃  » **Version:** ${config.app.version}
-┃  » **Author:** @${config.app.author}
-┃  » **Mode:** Production
-┃
-┣━━〔 🔑 **LOGIN INFO** 〕━━
-┃  » Your ID: \`${chatId}\`
-┃  » Use this ID to login on web.
-┃
-╰━━━━━━━━━━━━━━━━━━━━━━━━━━━╯
-   *Powered by Ovalium Technology*`.trim();
+✨ **XOVALIUM MANAGEMENT SYSTEM** ✨
+━━━━━━━━━━━━━━━━━━━━━━━━
+👋 **Greetings, ${username}**
+
+Xovalium is a premium all-in-one distribution engine designed for high-performance WhatsApp operations. 
+
+🚀 **PLATFORM FEATURES:**
+⟦ 💣 ⟧ **Blast Engine:** High-speed distribution.
+⟦ 🖥️ ⟧ **Web Control:** Full automation via WebUI.
+
+🔐 **USER SESSION:**
+⟦ 👤 ⟧ **User ID:** \`${chatId}\`
+⟦ 🛡️ ⟧ **Access:** \`${membershipTag} [${roleTag}]\`
+
+━━━━━━━━━━━━━━━━━━━━━━━━
+*Powered by XWebUI Engine*`.trim();
+
+    const baseUrl = `http://${config.app.urlWeb}:${config.app.port}`;
 
     try {
         await bot.sendVideo(chatId, "https://files.catbox.moe/eujf4u.mp4", {
             caption: caption,
             parse_mode: "Markdown",
-            reply_markup: {
-                inline_keyboard: [
-                    [
-                        { text: "⚙️ Settings", callback_data: "settings" },
-                        { text: "📰 Set News", callback_data: "setnews" }
-                    ],
-                    [
-                        { text: "💎 Add VIP", callback_data: "addvip" }
-                    ]
-                ]
-            }
         });
     } catch (error) {
         console.error("Failed to send video:", error.message);
-        // Fallback to text if video fails
         bot.sendMessage(chatId, caption, { 
             parse_mode: "Markdown",
-            reply_markup: {
-                inline_keyboard: [
-                    [
-                        { text: "⚙️ Settings", callback_data: "settings" },
-                        { text: "📰 Set News", callback_data: "setnews" }
-                    ],
-                    [
-                        { text: "💎 Add VIP", callback_data: "addvip" }
-                    ]
-                ]
-            }
         });
     }
 }
 
-// Callback Query Handler
-bot.on("callback_query", (query) => {
-    const chatId = query.message.chat.id;
-    const data = query.data;
-
-    if (data === "settings") {
-        bot.sendMessage(chatId, "⚙️ **Settings Menu**\nUse `/connect <number>` to pair WhatsApp.", { parse_mode: "Markdown" });
-    } else if (data === "setnews") {
-        bot.sendMessage(chatId, "📰 **Set News Menu**\nUnder development...", { parse_mode: "Markdown" });
-    } else if (data === "addvip") {
-        bot.sendMessage(chatId, "💎 **Add VIP Menu**\nUnder development...", { parse_mode: "Markdown" });
-    }
-    
-    bot.answerCallbackQuery(query.id);
-});
-
-// Command Handler
 bot.on("message", async (msg) => {
     const chatId = msg.chat.id;
     const text = msg.text;
@@ -109,25 +77,6 @@ bot.on("message", async (msg) => {
     
     else if (text === "/id") {
         bot.sendMessage(chatId, `🆔 **Your Telegram ID:** \`${chatId}\``, { parse_mode: "Markdown" });
-    }
-    
-    else if (text.startsWith("/connect")) {
-        const args = text.split(" ");
-        if (args.length < 2) {
-            return bot.sendMessage(chatId, "❌ **Error**\nFormat: `/connect 628xxx`", { parse_mode: "Markdown" });
-        }
-
-        const phoneNumber = args[1];
-        const sessionId = `session_${chatId}`;
-        
-        bot.sendMessage(chatId, `⏳ **Requesting pairing code for ${phoneNumber}...**\nPlease check your terminal or wait for a follow-up.`, { parse_mode: "Markdown" });
-
-        try {
-            const sock = await connectToWhatsApp(sessionId, phoneNumber);
-            activeSessions.set(sessionId, sock);
-        } catch (error) {
-            bot.sendMessage(chatId, `❌ **Error:** ${error.message}`);
-        }
     }
 });
 
