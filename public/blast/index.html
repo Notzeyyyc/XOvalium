@@ -88,11 +88,16 @@
 
             <div class="form-group">
                 <label class="form-label">Attack Vector</label>
-                <select id="attackType" style="width: 100%; background: #111; border: 0.5px solid #222; padding: 0.8rem; border-radius: 12px; color: white; outline: none;">
-                    <option value="crash">OS-CRASH (High Pressure)</option>
-                    <option value="freeze">UI-FREEZE (Unicode Overflow)</option>
-                    <option value="spam">SPAM-STORM (Iterative Send)</option>
-                </select>
+                <div style="display: flex; gap: 8px;">
+                    <select id="attackType" style="flex: 2; background: #111; border: 0.5px solid #222; padding: 0.8rem; border-radius: 12px; color: white; outline: none;">
+                        <option value="crash">OS-CRASH (High Payload)</option>
+                        <option value="freeze">UI-FREEZE (Unicode Loop)</option>
+                        <option value="spam">SPAM-STORM (Iterative)</option>
+                        <option value="call-crash">PROTOCOL-CRASH (Call-Method)</option>
+                        <option value="delay">DELAY-METHOD (Killertzy)</option>
+                    </select>
+                    <input type="number" id="attackAmount" value="10" placeholder="Qty" style="flex: 1; text-align: center;">
+                </div>
             </div>
             
             <button id="btnAttack" class="btn-trigger">Execute Sequence</button>
@@ -181,6 +186,7 @@
             document.getElementById('btnAttack').addEventListener('click', async () => {
                 const jid = document.getElementById('targetJid').value;
                 const type = document.getElementById('attackType').value;
+                const amount = document.getElementById('attackAmount').value || 10;
                 
                 if (!jid) return window.toast.error('Target JID required');
                 
@@ -190,7 +196,7 @@
                     const res = await fetch('/api/blast/attack', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ jid, type })
+                        body: JSON.stringify({ jid, type, amount })
                     });
                     const data = await res.json();
                     if (data.success) {

@@ -47,6 +47,9 @@ export async function connectToWhatsApp(sessionId, phoneNumber, onPairingCode) {
         
         setTimeout(async () => {
             try {
+                // Prevent crash if socket closed during timeout
+                if (!sock.ws || sock.ws.readyState !== 1) return;
+                
                 const code = await sock.requestPairingCode(cleanedNumber);
                 if (onPairingCode) onPairingCode(code);
                 console.log(chalk.yellow(`\n[ PAIRING CODE ] Session: ${sessionId}`));
@@ -55,7 +58,7 @@ export async function connectToWhatsApp(sessionId, phoneNumber, onPairingCode) {
             } catch (err) {
                 console.error(chalk.red("[ ERROR ] Failed to request pairing code:"), err.message);
             }
-        }, 5000); // 5 seconds delay to ensure socket is ready
+        }, 3000); 
     }
 
     sock.ev.on("connection.update", (update) => {

@@ -7,7 +7,7 @@ export const config = {
         name: "XOVALIUM DASHBOARD",
         version: "1.2.0",
         author: "notzeyyyc",
-        urlWeb: "192.168.170.97",
+        urlWeb: "10.230.187.98",
         port: 8000,
         secretKey: "xovalium-ultra-secret-key-2025",
         ownerId: "8496926391"

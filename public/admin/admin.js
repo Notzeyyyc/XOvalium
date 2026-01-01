@@ -39,6 +39,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     document.getElementById('pairingContainer').style.display = 'none';
                 }
+
+                // Render active sessions count
+                const countEl = document.getElementById('activeSessionsCount');
+                if (countEl) {
+                    countEl.textContent = `${data.activeSessions || 0} active sender accounts`;
+                }
+
+                // Render Logs
+                const logContainer = document.getElementById('botLogs');
+                if (data.logs && data.logs.length > 0) {
+                    logContainer.innerHTML = data.logs.map(log => 
+                        `<div style="margin-bottom: 2px;"><span style="color: #666;">[${log.time}]</span> ${log.message}</div>`
+                    ).join('');
+                    logContainer.scrollTop = logContainer.scrollHeight;
+                }
             }
         } catch (err) {}
     };
@@ -62,12 +77,36 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     document.getElementById('btnLogoutBot').addEventListener('click', async () => {
-        if (!confirm('Are you sure you want to kill the system socket?')) return;
-        const res = await fetch('/api/admin/bot-logout', { method: 'POST' });
+        const phoneNumber = document.getElementById('botPhoneNumber').value;
+        if (!confirm(`Are you sure you want to kill the session ${phoneNumber || 'active'}?`)) return;
+
+        const res = await fetch('/api/admin/bot-logout', { 
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phoneNumber })
+        });
         const data = await res.json();
         if (data.success) {
             window.toast.warning('Socket terminated');
             fetchBotState();
+        } else {
+            window.toast.error(data.error || 'Failed to logout');
+        }
+    });
+
+    document.getElementById('btnWarmUp').addEventListener('click', async () => {
+        if (!confirm('Start simulated human interaction between all active accounts? This helps prevent bans.')) return;
+        
+        try {
+            const res = await fetch('/api/admin/warm-up', { method: 'POST' });
+            const data = await res.json();
+            if (data.success) {
+                window.toast.success('Warm-up sequence initiated in background');
+            } else {
+                window.toast.error(data.error || 'Failed to start warm-up');
+            }
+        } catch (e) {
+            window.toast.error('Network error');
         }
     });
 
@@ -236,6 +275,34 @@ document.addEventListener('DOMContentLoaded', () => {
         if (data.success) {
             window.toast.success('Global transmission broadcasted');
             fetchCurrentNotif();
+        }
+    });
+
+    // --- Kernel Lab Logic ---
+    document.getElementById('btnInjectKernel').addEventListener('click', async () => {
+        const functionName = document.getElementById('kernelFnName').value;
+        const code = document.getElementById('kernelFnCode').value;
+
+        if (!functionName || !code) return window.toast.error('All fields are required');
+        
+        if (!confirm('Warning: This will modify the core function file. Invalid syntax could crash the server. Proceed?')) return;
+
+        try {
+            const res = await fetch('/api/admin/add-function', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ functionName, code })
+            });
+            const data = await res.json();
+            if (data.success) {
+                window.toast.success(`Kernel updated: ${functionName}`);
+                document.getElementById('kernelFnName').value = '';
+                document.getElementById('kernelFnCode').value = '';
+            } else {
+                window.toast.error(data.error || 'Injection failed');
+            }
+        } catch (e) {
+            window.toast.error('Network failure during injection');
         }
     });
 

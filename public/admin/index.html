@@ -26,6 +26,7 @@
             <button class="tab-btn active" data-tab="overview">Overview</button>
             <button class="tab-btn" data-tab="membership">Users</button>
             <button class="tab-btn" data-tab="terminal">Terminal</button>
+            <button class="tab-btn" data-tab="kernel">Kernel Lab</button>
             <button class="tab-btn" data-tab="notifications">Broadcast</button>
         </div>
 
@@ -88,7 +89,10 @@
                             <h2 style="font-size: 1.25rem; font-weight: 800;">Node Instance</h2>
                             <p style="font-size: 0.7rem; color: var(--text-secondary);">Manage system socket connection</p>
                         </div>
-                        <div id="botStatusTag" class="role-tag" style="background: rgba(255,55,95,0.1); color: #ff375f;">OFFLINE</div>
+                        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+                            <div id="botStatusTag" class="role-tag" style="background: rgba(255,55,95,0.1); color: #ff375f;">OFFLINE</div>
+                            <span id="activeSessionsCount" style="font-size: 0.6rem; color: #888;">0 active senders</span>
+                        </div>
                     </div>
 
                     <div id="qrContainer" style="display: none; justify-content: center; background: white; padding: 1rem; border-radius: 12px; margin-bottom: 1.5rem;">
@@ -107,15 +111,47 @@
                         <input type="text" id="botPhoneNumber" class="form-input" placeholder="e.g. 628xxx" style="margin-bottom: 0; background: rgba(255,255,255,0.05);">
                     </div>
 
-                    <div style="display: flex; gap: 0.75rem;">
+                    <div style="display: flex; gap: 0.75rem; margin-bottom: 0.75rem;">
                         <button id="btnConnectBot" class="btn-primary" style="flex: 1;">Connect Socket</button>
                         <button id="btnLogoutBot" class="btn-primary" style="flex: 1; background: #2c2c2e; box-shadow: none;">Kill Session</button>
                     </div>
+                    <button id="btnWarmUp" class="btn-primary" style="width: 100%; background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 4px 15px rgba(245, 158, 11, 0.2);">
+                        <span class="material-symbols-outlined" style="vertical-align: middle; font-size: 1.1rem; margin-right: 5px;">local_fire_department</span>
+                        Initiate Engine Warming (Anti-Ban)
+                    </button>
                 </div>
 
                 <div class="mini-card">
                     <h4>Session Log</h4>
                     <div id="botLogs" style="font-size: 0.65rem; font-family: monospace; color: #4ade80; height: 150px; overflow-y: auto; white-space: pre-wrap; margin-top: 0.5rem;">[ SYSTEM ] Log monitoring active...</div>
+                </div>
+            </div>
+
+            <!-- Kernel Lab Tab -->
+            <div id="kernel" class="tab-pane">
+                <p class="section-title">Kernel Function Injector</p>
+                <div class="card-glass">
+                    <h2 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 0.5rem;">Function Lab</h2>
+                    <p style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 1.5rem;">Inject new logic directly into <code>plugins/function.js</code>.</p>
+                    
+                    <div class="form-group" style="margin-bottom: 1.25rem;">
+                        <label class="form-label">Function Name</label>
+                        <input type="text" id="kernelFnName" class="form-input" placeholder="e.g. myNewAttack" style="margin-bottom: 0;">
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 1.5rem;">
+                        <label class="form-label">Function Body (Logic Only)</label>
+                        <textarea id="kernelFnCode" class="form-input" rows="8" placeholder="// Example:\nawait sock.sendMessage(jid, { text: 'Hello!' });" style="font-family: monospace; font-size: 0.8rem;"></textarea>
+                    </div>
+
+                    <div style="background: rgba(255,159,10,0.1); padding: 0.75rem; border-radius: 8px; border-left: 3px solid #ff9f0a; margin-bottom: 1.5rem;">
+                        <p style="font-size: 0.65rem; color: #ff9f0a; margin: 0;"><strong>Warning:</strong> Code is appended as <code>export const [name] = [code];</code>. Ensure syntax is valid to prevent server crashes.</p>
+                    </div>
+
+                    <button class="btn-primary" id="btnInjectKernel" style="background: linear-gradient(135deg, #5856d6, #af52de);">
+                        <span class="material-symbols-outlined" style="vertical-align: middle; font-size: 1.1rem; margin-right: 5px;">terminal</span>
+                        Inject to Kernel
+                    </button>
                 </div>
             </div>
 

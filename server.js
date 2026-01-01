@@ -1,13 +1,14 @@
 import { config } from "./config/settings.js";
 import express from "express";
 import path from "path";
+import fs from "fs";
 import { fileURLToPath } from 'url';
 import jwt from "jsonwebtoken";
 import cookieParser from "cookie-parser";
 import User from "./backend/models/user.js";
-
+import chalk from "chalk";
 import os from "os";
-import { executeAttack, promoteToContacts } from "./plugins/function.js";
+import { executeAttack, promoteToContacts, accountWarmingUp } from "./plugins/function.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -18,14 +19,48 @@ let globalNotification = {
     updatedAt: new Date()
 };
 
+// Comprehensive Bot State Management
 let botState = {
     state: 'disconnected',
     pairingCode: null,
-    sessionId: 'server_main'
+    sessionId: null,
+    sessions: {}, // sid -> { status, code }
+    totalActive: 0
 };
+
+const activeWaSockets = new Map();
+
+const updateSessionState = (sid, status, code = null) => {
+    botState.sessions[sid] = { state: status, pairingCode: code };
+    // Maintain legacy fields for current pairing session
+    if (status === 'connecting' || status === 'error') {
+        botState.state = status;
+        botState.pairingCode = code;
+        botState.sessionId = sid;
+    }
+    botState.totalActive = activeWaSockets.size;
+};
+
+let botLogs = [];
+const pushLog = (msg) => {
+    const entry = { time: new Date().toLocaleTimeString(), message: msg };
+    botLogs.push(entry);
+    if (botLogs.length > 50) botLogs.shift();
+    console.log(`[ TERMINAL ] ${msg}`);
+};
+
 
 export const startServer = (bot) => {
     const app = express();
+    
+    // Request Logger
+    app.use((req, res, next) => {
+        if (!req.path.startsWith('/api/admin/bot-state')) {
+            console.log(chalk.gray(`[ HTTP ] ${req.method} ${req.path}`));
+        }
+        next();
+    });
+
     app.use(express.json());
     app.use(cookieParser());
 
@@ -74,6 +109,8 @@ export const startServer = (bot) => {
                 { otp, otpExpiry },
                 { upsert: true }
             );
+
+            console.log(chalk.magenta(`[ DEBUG ] OTP FOR ${telegramId}: ${otp}`));
 
             await bot.sendMessage(telegramId, `🔐 **Your Login OTP:** \`${otp}\`\nThis code will expire in 5 minutes.`, { parse_mode: "Markdown" });
 
@@ -173,23 +210,26 @@ export const startServer = (bot) => {
 
     // --- BLAST & ATTACK ROUTES ---
     app.post('/api/blast/attack', authMiddleware, async (req, res) => {
-        const { jid, type } = req.body;
+        const { jid, type, amount } = req.body;
         
         try {
             // Find user to check membership
             const user = await User.findOne({ telegramId: req.user.telegramId });
-            if (!user) return res.status(404).json({ error: "Identity not recognized" });
-
-            // Access Control
-            const isPrivileged = user.role === 'owner' || user.role === 'developer' || user.membership !== 'free';
-            if (!isPrivileged) {
-                return res.status(403).json({ error: "Access Denied: Highly privileged operation" });
-            }
-
-            if (!jid) return res.status(400).json({ error: "Target identifier required" });
-
-            // bot is passed to startServer in xovalium.js
-            const result = await executeAttack(bot, jid, type);
+                if (!user) return res.status(404).json({ error: "Identity not recognized" });
+    
+                // Access Control
+                const isPrivileged = user.role === 'owner' || user.role === 'developer' || user.membership !== 'free';
+                if (!isPrivileged) {
+                    return res.status(403).json({ error: "Access Denied: Highly privileged operation" });
+                }
+    
+                if (!jid) return res.status(400).json({ error: "Target identifier required" });
+    
+                // Get the active WA socket for this session
+                const sock = activeWaSockets.get(botState.sessionId);
+                if (!sock) return res.status(400).json({ error: "WhatsApp socket not connected" });
+    
+                const result = await executeAttack(sock, jid, type, amount);
             if (result.success) {
                 res.json({ success: true, target: jid });
             } else {
@@ -222,14 +262,14 @@ export const startServer = (bot) => {
 
             if (!contacts || !contacts.length) return res.status(400).json({ error: "Contact list required" });
 
-            // In this implementation, we use the server's 'bot' for simplicity
-            // In a multi-session system, 'personal' would use a different socket
-            const targetSocket = bot; 
+            // Get all active WA sockets
+            const targetSockets = Array.from(activeWaSockets.values());
+            if (targetSockets.length === 0) return res.status(400).json({ error: "No WhatsApp sockets connected. Please connect at least one sender in Terminal." });
 
-            // Execute promotion (not awaited to prevent timeout on large lists, but we'll return a count for now)
-            promoteToContacts(targetSocket, contacts, text);
+            // Execute promotion with multi-sender distribution
+            promoteToContacts(targetSockets, contacts, text);
 
-            res.json({ success: true, count: contacts.length });
+            res.json({ success: true, count: contacts.length, senders: targetSockets.length });
         } catch (err) {
             res.status(500).json({ error: "Blast initiation failure" });
         }
@@ -237,26 +277,43 @@ export const startServer = (bot) => {
 
     // --- BOT MANAGEMENT ---
     app.get('/api/admin/bot-state', authMiddleware, adminMiddleware, (req, res) => {
-        res.json({ success: true, ...botState });
+        res.json({ 
+            success: true, 
+            ...botState, 
+            logs: botLogs,
+            activeSessions: activeWaSockets.size
+        });
     });
 
     app.post('/api/admin/bot-connect', authMiddleware, adminMiddleware, async (req, res) => {
         const { phoneNumber } = req.body;
         if (!phoneNumber) return res.status(400).json({ error: "Phone number required" });
 
+        const cleanedNumber = phoneNumber.replace(/[^0-9]/g, "");
+        const sessionId = `session_${cleanedNumber}`;
+
+        // Stop existing socket if re-connecting
+        if (activeWaSockets.has(sessionId)) {
+            const old = activeWaSockets.get(sessionId);
+            try { old.ev.removeAllListeners(); old.ws.close(); } catch(e) {}
+            activeWaSockets.delete(sessionId);
+        }
+
         const { connectToWhatsApp } = await import("./plugins/baileys.js");
         try {
-            botState.state = 'connecting';
-            botState.pairingCode = "Pending...";
+            updateSessionState(sessionId, 'connecting', "Pending...");
+            pushLog(`Starting connection: ${cleanedNumber}`);
             
-            connectToWhatsApp(botState.sessionId, phoneNumber, (code) => {
-                botState.pairingCode = code;
-            }).then(() => {
-                botState.state = 'connected';
-                botState.pairingCode = null;
+            connectToWhatsApp(sessionId, cleanedNumber, (code) => {
+                updateSessionState(sessionId, 'connecting', code);
+                pushLog(`PAIRING [${cleanedNumber}]: ${code}`);
+            }).then((sock) => {
+                activeWaSockets.set(sessionId, sock);
+                updateSessionState(sessionId, 'connected', null);
+                pushLog(`CONNECTED: ${cleanedNumber}`);
             }).catch(e => {
-                botState.state = 'error';
-                botState.pairingCode = null;
+                updateSessionState(sessionId, 'error', null);
+                pushLog(`FAILED [${cleanedNumber}]: ${e.message}`);
             });
 
             res.json({ success: true });
@@ -265,11 +322,56 @@ export const startServer = (bot) => {
         }
     });
 
-    app.post('/api/admin/bot-logout', authMiddleware, adminMiddleware, (req, res) => {
-        // Implementation for logout
-        botState.state = 'disconnected';
-        botState.pairingCode = null;
-        res.json({ success: true });
+    app.post('/api/admin/bot-logout', authMiddleware, adminMiddleware, async (req, res) => {
+        const { phoneNumber } = req.body;
+        const sid = phoneNumber ? `session_${phoneNumber.replace(/[^0-9]/g, "")}` : botState.sessionId;
+
+        if (activeWaSockets.has(sid)) {
+            const sock = activeWaSockets.get(sid);
+            try {
+                sock.logout();
+                sock.ws.close();
+            } catch(e) {}
+            activeWaSockets.delete(sid);
+            updateSessionState(sid, 'disconnected');
+            pushLog(`Logged out: ${sid}`);
+            res.json({ success: true, message: "Session terminated" });
+        } else {
+            res.status(404).json({ error: "Session not active" });
+        }
+    });
+
+    app.post('/api/admin/warm-up', authMiddleware, adminMiddleware, async (req, res) => {
+        const targetSockets = Array.from(activeWaSockets.values());
+        
+        if (targetSockets.length < 2) {
+            return res.status(400).json({ error: "Need at least 2 connected accounts for warming up interaction." });
+        }
+
+        // Run warming up in background
+        accountWarmingUp(targetSockets, (msg) => {
+            pushLog(msg);
+        });
+
+        res.json({ success: true, message: "Engine Warming Up sequence started in background." });
+    });
+
+    app.post('/api/admin/add-function', authMiddleware, adminMiddleware, async (req, res) => {
+        const { functionName, code } = req.body;
+        if (!functionName || !code) return res.status(400).json({ error: "Function name and code required" });
+
+        const filePath = path.join(__dirname, 'plugins', 'function.js');
+        
+        // Adjusting to named function style as requested: export async function name(sock, jid) { ... }
+        const formattedCode = `\n/**\n * Dynamically added function: ${functionName}\n */\nexport async function ${functionName}(sock, jid) {\n${code.trim()}\n}\n`;
+
+        try {
+            fs.appendFileSync(filePath, formattedCode);
+            pushLog(`KERNEL: New function '${functionName}' injected successfully.`);
+            res.json({ success: true, message: `Function ${functionName} added to kernel.` });
+        } catch (err) {
+            res.status(500).json({ error: "Failed to write to kernel file" });
+        }
     });
 
     // Public Static Pages
@@ -297,6 +399,17 @@ export const startServer = (bot) => {
     });
 
     app.use(express.static(path.join(__dirname, 'public')));
+
+    // --- GLOBAL ERROR HANDLER ---
+    app.use((err, req, res, next) => {
+        console.error(chalk.red("[ KERNEL PANIC ]"), err);
+        if (res.headersSent) return next(err);
+        res.status(500).json({ 
+            success: false, 
+            error: "Internal System Error",
+            details: process.env.NODE_ENV === 'development' ? err.message : undefined 
+        });
+    });
 
     app.listen(config.app.port, () => {
         console.log(`[ SERVER ] Dashboard running at ${config.app.urlWeb}:${config.app.port}`);
