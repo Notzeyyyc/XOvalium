@@ -130,28 +130,44 @@
             <!-- Kernel Lab Tab -->
             <div id="kernel" class="tab-pane">
                 <p class="section-title">Kernel Function Injector</p>
-                <div class="card-glass">
-                    <h2 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 0.5rem;">Function Lab</h2>
-                    <p style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 1.5rem;">Inject new logic directly into <code>plugins/function.js</code>.</p>
-                    
-                    <div class="form-group" style="margin-bottom: 1.25rem;">
-                        <label class="form-label">Function Name</label>
-                        <input type="text" id="kernelFnName" class="form-input" placeholder="e.g. myNewAttack" style="margin-bottom: 0;">
+                <div class="card-glass" style="padding: 1rem;">
+                    <div style="display: grid; grid-template-columns: 180px 1fr; gap: 1rem; min-height: 500px;">
+                        <!-- File Browser -->
+                        <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 12px; padding: 1rem; overflow-y: auto;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                                <span style="font-size: 0.65rem; font-weight: 800; color: #666; text-transform: uppercase;">Source Units</span>
+                                <button id="btnNewKernel" class="material-symbols-outlined" style="font-size: 1.1rem; background: none; border: none; color: #5e5ce6; cursor: pointer;">add_box</button>
+                            </div>
+                            <div id="kernelFilesList" style="display: flex; flex-direction: column; gap: 4px;">
+                                <!-- Files Go Here -->
+                                <p style="font-size: 0.65rem; color: #444; text-align: center; margin-top: 1rem;">Scanning...</p>
+                            </div>
+                        </div>
+
+                        <!-- Editor Area -->
+                        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                            <div style="display: flex; gap: 8px; align-items: center;">
+                                <input type="text" id="kernelFnName" class="form-input" placeholder="filename (e.g. protocol_kill)" style="flex: 1; margin: 0; font-family: monospace; font-size: 0.75rem; padding: 0.5rem 0.75rem;">
+                                <button class="btn-primary" id="btnSaveKernel" style="padding: 0.5rem 1rem; font-size: 0.65rem; background: #32d74b; min-width: auto; height: auto;">SAVE</button>
+                                <button class="btn-primary" id="btnDeleteKernel" style="padding: 0.5rem 1rem; font-size: 0.65rem; background: #ff375f; min-width: auto; height: auto; display: none;">DELETE</button>
+                            </div>
+                            
+                            <div style="flex: 1; min-height: 350px;">
+                                <textarea id="kernelFnCode" class="form-input" placeholder="// export async function my_unit(sock, jid) { ... }" style="width: 100%; height: 100%; background: #050505; color: #d4d4d4; font-family: monospace; font-size: 0.75rem; resize: none; margin: 0; padding: 1rem;"></textarea>
+                            </div>
+
+                            <div style="background: rgba(255,159,10,0.05); border: 1px solid rgba(255,159,10,0.2); padding: 0.6rem; border-radius: 8px;">
+                                <p style="font-size: 0.6rem; color: #ff9f0a; margin: 0;"><strong>Rule:</strong> Use <code>export async function [name](sock, jid)</code>. Filename & Function name must match.</p>
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="form-group" style="margin-bottom: 1.5rem;">
-                        <label class="form-label">Function Body (Logic Only)</label>
-                        <textarea id="kernelFnCode" class="form-input" rows="8" placeholder="// Example:\nawait sock.sendMessage(jid, { text: 'Hello!' });" style="font-family: monospace; font-size: 0.8rem;"></textarea>
+                    <div style="margin-top: 1.5rem; border-top: 1px solid var(--border); padding-top: 1.5rem;">
+                        <p class="section-title">Runtime Registry</p>
+                        <div id="activeKernelsList" style="display: flex; flex-wrap: wrap; gap: 8px;">
+                            <!-- Dynamic list -->
+                        </div>
                     </div>
-
-                    <div style="background: rgba(255,159,10,0.1); padding: 0.75rem; border-radius: 8px; border-left: 3px solid #ff9f0a; margin-bottom: 1.5rem;">
-                        <p style="font-size: 0.65rem; color: #ff9f0a; margin: 0;"><strong>Warning:</strong> Code is appended as <code>export const [name] = [code];</code>. Ensure syntax is valid to prevent server crashes.</p>
-                    </div>
-
-                    <button class="btn-primary" id="btnInjectKernel" style="background: linear-gradient(135deg, #5856d6, #af52de);">
-                        <span class="material-symbols-outlined" style="vertical-align: middle; font-size: 1.1rem; margin-right: 5px;">terminal</span>
-                        Inject to Kernel
-                    </button>
                 </div>
             </div>
 

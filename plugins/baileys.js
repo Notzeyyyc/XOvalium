@@ -27,12 +27,15 @@ export async function connectToWhatsApp(sessionId, phoneNumber, onPairingCode) {
     const sock = makeWASocket({
         version,
         printQRInTerminal: false,
-        logger: pino({ level: "error" }), // Changed from silent to see critical errors
+        logger: pino({ level: "fatal" }), 
         auth: {
             creds: state.creds,
-            keys: makeCacheableSignalKeyStore(state.keys, pino({ level: "error" })),
+            keys: makeCacheableSignalKeyStore(state.keys, pino({ level: "fatal" })),
         },
-        browser: ["Ubuntu", "Chrome", "20.0.04"], // Standard Baileys browser
+        browser: ["XOVALIUM", "Chrome", "20.0.04"],
+        shouldSyncHistoryMessage: () => false,
+        markOnlineOnConnect: false,
+        generateHighQualityLinkPreview: false,
     });
 
     // Request Pairing Code

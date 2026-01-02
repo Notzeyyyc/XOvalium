@@ -8,7 +8,7 @@ import cookieParser from "cookie-parser";
 import User from "./backend/models/user.js";
 import chalk from "chalk";
 import os from "os";
-import { executeAttack, promoteToContacts, accountWarmingUp } from "./plugins/function.js";
+import { executeAttack, accountWarmingUp } from "./plugins/engine.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -322,30 +322,98 @@ export const startServer = (bot) => {
         res.json({ success: true, message: "Engine Warming Up sequence started in background." });
     });
 
-    app.post('/api/admin/add-function', authMiddleware, adminMiddleware, async (req, res) => {
-        const { functionName, code } = req.body;
-        if (!functionName || !code) return res.status(400).json({ error: "Function name and code required" });
-
-        const filePath = path.join(__dirname, 'plugins', 'function.js');
+    // --- KERNEL FILE MANAGER APIs ---
+    app.get('/api/admin/kernel/files', authMiddleware, adminMiddleware, (req, res) => {
+        const kernelsDir = path.join(__dirname, 'plugins', 'kernels');
+        if (!fs.existsSync(kernelsDir)) fs.mkdirSync(kernelsDir, { recursive: true });
         
-        // Adjusting to named function style as requested: export async function name(sock, jid) { ... }
-        const formattedCode = `\n/**\n * Dynamically added function: ${functionName}\n */\nexport async function ${functionName}(sock, jid) {\n${code.trim()}\n}\nKERNELS["${functionName.toLowerCase()}"] = ${functionName};\n`;
+        try {
+            const files = fs.readdirSync(kernelsDir).filter(f => f.endsWith('.js'));
+            res.json({ success: true, files });
+        } catch (err) {
+            res.status(500).json({ error: "Failed to list kernel directory" });
+        }
+    });
+
+    app.get('/api/admin/kernel/read/:filename', authMiddleware, adminMiddleware, (req, res) => {
+        const { filename } = req.params;
+        const filePath = path.join(__dirname, 'plugins', 'kernels', filename);
+        
+        if (!fs.existsSync(filePath)) return res.status(404).json({ error: "File not found" });
+        
+        try {
+            const content = fs.readFileSync(filePath, 'utf8');
+            res.json({ success: true, content });
+        } catch (err) {
+            res.status(500).json({ error: "Failed to read file" });
+        }
+    });
+
+    app.post('/api/admin/kernel/save', authMiddleware, adminMiddleware, async (req, res) => {
+        let { filename, code } = req.body;
+        if (!filename || !code) return res.status(400).json({ error: "Filename and code required" });
+        
+        if (!filename.endsWith('.js')) filename += '.js';
+        
+        const kernelsDir = path.join(__dirname, 'plugins', 'kernels');
+        const filePath = path.join(kernelsDir, filename);
 
         try {
-            fs.appendFileSync(filePath, formattedCode);
-            pushLog(`KERNEL: New function '${functionName}' injected successfully.`);
-            res.json({ success: true, message: `Function ${functionName} added to kernel.` });
+            fs.writeFileSync(filePath, code, 'utf8');
+            const { reloadKernels } = await import('./plugins/engine.js');
+            await reloadKernels();
+            pushLog(`ENGINE: File '${filename}' synchronized.`);
+            res.json({ success: true, message: `Kernel ${filename} updated.` });
         } catch (err) {
-            res.status(500).json({ error: "Failed to write to kernel file" });
+            console.error(err);
+            res.status(500).json({ error: "Disk write failure on engine unit" });
+        }
+    });
+
+    app.post('/api/admin/kernel/delete', authMiddleware, adminMiddleware, async (req, res) => {
+        const { filename } = req.body;
+        if (!filename) return res.status(400).json({ error: "Filename required" });
+
+        const filePath = path.join(__dirname, 'plugins', 'kernels', filename);
+        if (!fs.existsSync(filePath)) return res.status(404).json({ error: "File not found" });
+
+        try {
+            fs.unlinkSync(filePath);
+            const { reloadKernels } = await import('./plugins/engine.js');
+            await reloadKernels();
+            pushLog(`ENGINE: Unit '${filename}' purged.`);
+            res.json({ success: true, message: "Kernel purged." });
+        } catch (err) {
+            res.status(500).json({ error: "Failed to purge unit" });
+        }
+    });
+
+    // Temporary Memory Kernel Injection
+    app.post('/api/admin/kernel/temp', authMiddleware, adminMiddleware, async (req, res) => {
+        const { name, code } = req.body;
+        if (!name || !code) return res.status(400).json({ error: "Name and code required" });
+
+        try {
+            const { registerTempKernel } = await import('./plugins/engine.js');
+            // Wrap code into an async function
+            const asyncFn = new Function('sock', 'jid', `return (async (sock, jid) => { ${code} })(sock, jid)`);
+            const hash = registerTempKernel(name, asyncFn);
+            
+            pushLog(`ENGINE: Temporary unit '${name}' registered in volatile memory.`);
+            res.json({ success: true, hash });
+        } catch (err) {
+            res.status(500).json({ error: "Failed to compile temporary unit" });
         }
     });
 
     app.get('/api/admin/kernel-list', authMiddleware, async (req, res) => {
         try {
-            const { KERNELS } = await import('./plugins/function.js');
-            res.json({ success: true, kernels: Object.keys(KERNELS) });
+            const { KERNELS, TEMP_KERNELS } = await import('./plugins/engine.js');
+            const persistent = Object.keys(KERNELS);
+            const temporary = Object.keys(TEMP_KERNELS);
+            res.json({ success: true, kernels: [...persistent, ...temporary] });
         } catch (err) {
-            res.status(500).json({ error: "Failed to load kernels" });
+            res.status(500).json({ error: "Failed to fetch engine registry" });
         }
     });
 

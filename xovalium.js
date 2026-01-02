@@ -78,6 +78,31 @@ bot.on("message", async (msg) => {
     else if (text === "/id") {
         bot.sendMessage(chatId, `🆔 **Your Telegram ID:** \`${chatId}\``, { parse_mode: "Markdown" });
     }
+
+    // --- KERNEL TOOLS ---
+    else if (text.startsWith("/wrap")) {
+        const code = text.replace("/wrap", "").trim();
+        if (!code) return bot.sendMessage(chatId, "❌ **Usage:** `/wrap [logic]`\nExample: `/wrap await sock.sendMessage(...)`", { parse_mode: "Markdown" });
+
+        const sig = "SIG_" + Math.random().toString(36).substring(7).toUpperCase();
+        const wrapped = `export const version = "1.0.0";\nexport const hash = "${sig}";\n\nexport async function custom_unit(sock, jid) {\n    ${code.split('\n').join('\n    ')}\n}`;
+        
+        bot.sendMessage(chatId, "🛠️ **Module Wrapped!**\nInject this persistent unit into the Kernel Lab:", { parse_mode: "Markdown" });
+        bot.sendMessage(chatId, "```javascript\n" + wrapped + "\n```", { parse_mode: "Markdown" });
+    }
+
+    else if (text.startsWith("/verify")) {
+        const code = text.replace("/verify", "").trim();
+        const hasVersion = code.includes("export const version");
+        const hasHash = code.includes("export const hash");
+        const hasFunction = code.includes("async function") && code.includes("(sock, jid)");
+
+        if (hasVersion && hasHash && hasFunction) {
+            bot.sendMessage(chatId, "✅ **Verification Passed:** Unit is compliant with the Xovalium Engine (v2.0).");
+        } else {
+            bot.sendMessage(chatId, `❌ **Verification Failed:**\n- Version Export: ${hasVersion ? '✅' : '❌'}\n- Hash Fingerprint: ${hasHash ? '✅' : '❌'}\n- Function Sig: ${hasFunction ? '✅' : '❌'}`);
+        }
+    }
 });
 
 bot.onCommand = function (command, callback) {

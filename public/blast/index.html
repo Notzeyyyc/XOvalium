@@ -28,31 +28,31 @@
             Return to Hub
         </a>
 
+        <!-- Hero image card -->
+        <div class="action-card" style="padding: 0; overflow: hidden; border: none; margin-bottom: 1.5rem;">
+            <img src="/assets/banner.jpg" alt="Hero" style="width: 100%; height: 180px; object-fit: cover; display: block;">
+        </div>
+
         <!-- JID Neural Attack (VIP/Owner only UI) -->
         <section class="action-card" id="attackSection" style="opacity: 0.5; pointer-events: none;">
             <div class="icon-box" style="background: rgba(244, 63, 94, 0.1); color: #f43f5e;">
                 <span class="material-symbols-outlined">security_update_warning</span>
             </div>
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                <h2 style="font-size: 1.1rem;">JID Neural Attack</h2>
+                <h2 style="font-size: 1.1rem;">Neural Attack</h2>
                 <span id="accessTag" style="font-size: 0.6rem; background: #222; padding: 0.2rem 0.5rem; border-radius: 4px; color: #888;">LOCKED</span>
             </div>
             <p style="font-size: 0.75rem; color: #666; margin-bottom: 1.5rem;">High-intensity data burst targeted at a specific JID identifier.</p>
             
             <div class="form-group">
-                <label class="form-label">Target JID</label>
-                <input type="text" id="targetJid" placeholder="example: 628xxx@s.whatsapp.net">
+                <label class="form-label">Target</label>
+                <input type="text" id="targetJid" placeholder="example: 628xxx">
             </div>
-
             <div class="form-group">
                 <label class="form-label">Attack Vector</label>
                 <div style="display: flex; gap: 8px;">
                     <select id="attackType" style="flex: 2; background: #111; border: 0.5px solid #222; padding: 0.8rem; border-radius: 12px; color: white; outline: none;">
-                        <option value="crash">OS-CRASH (High Payload)</option>
-                        <option value="freeze">UI-FREEZE (Unicode Loop)</option>
-                        <option value="spam">SPAM-STORM (Iterative)</option>
-                        <option value="call-crash">PROTOCOL-CRASH (Call-Method)</option>
-                        <option value="delay">DELAY-METHOD (Killertzy)</option>
+                        <option value="" disabled selected>Select Kernel...</option>
                     </select>
                     <input type="number" id="attackAmount" value="10" placeholder="Qty" style="flex: 1; text-align: center;">
                 </div>

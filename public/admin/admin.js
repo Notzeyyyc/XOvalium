@@ -19,6 +19,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (tabId === 'overview') fetchStats();
             if (tabId === 'notifications') fetchCurrentNotif();
             if (tabId === 'terminal') fetchBotState();
+            if (tabId === 'kernel') {
+                fetchKernels();
+                fetchKernelFiles();
+            }
         });
     });
 
@@ -278,31 +282,162 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- Kernel Lab Logic ---
-    document.getElementById('btnInjectKernel').addEventListener('click', async () => {
-        const functionName = document.getElementById('kernelFnName').value;
+    // --- Kernel Lab Logic (File Manager Edition) ---
+    const fetchKernelFiles = async () => {
+        try {
+            const res = await fetch('/api/admin/kernel/files');
+            const data = await res.json();
+            if (data.success) {
+                renderKernelFiles(data.files);
+            }
+        } catch (e) {}
+    };
+
+    const renderKernelFiles = (files) => {
+        const container = document.getElementById('kernelFilesList');
+        if (!container) return;
+        
+        if (files.length === 0) {
+            container.innerHTML = '<p style="font-size: 0.6rem; color: #444; text-align: center; margin-top: 1rem;">No custom units</p>';
+            return;
+        }
+
+        container.innerHTML = files.map(file => `
+            <div class="kernel-file-item" data-file="${file}" style="padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 0.7rem; color: #888; font-family: monospace; transition: all 0.2s; display: flex; align-items: center; gap: 8px;">
+                <span class="material-symbols-outlined" style="font-size: 0.9rem;">javascript</span>
+                <span style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${file}</span>
+            </div>
+        `).join('');
+
+        // Selection Logic
+        document.querySelectorAll('.kernel-file-item').forEach(item => {
+            item.addEventListener('click', () => {
+                document.querySelectorAll('.kernel-file-item').forEach(i => i.style.background = 'none');
+                item.style.background = 'rgba(94, 92, 230, 0.1)';
+                item.style.color = '#5e5ce6';
+                loadKernelFile(item.dataset.file);
+            });
+        });
+    };
+
+    const loadKernelFile = async (filename) => {
+        window.toast.info(`Opening ${filename}...`);
+        try {
+            const res = await fetch(`/api/admin/kernel/read/${filename}`);
+            const data = await res.json();
+            if (data.success) {
+                document.getElementById('kernelFnName').value = filename.replace('.js', '');
+                document.getElementById('kernelFnCode').value = data.content;
+                document.getElementById('btnDeleteKernel').style.display = 'block';
+                document.getElementById('kernelFnName').readOnly = true;
+            }
+        } catch (e) {
+            window.toast.error('Failed to read unit');
+        }
+    };
+
+    document.getElementById('btnNewKernel').addEventListener('click', () => {
+        const template = `export const version = "1.0.0";
+export const hash = "SIG_${Math.random().toString(36).substring(7).toUpperCase()}";
+
+/**
+ * Custom Attack Unit
+ */
+export async function my_unit(sock, jid) {
+    // Write your logic here
+    await sock.sendMessage(jid, { text: 'XOVALIUM MODULE EXECUTED' });
+}`;
+        document.getElementById('kernelFnName').value = '';
+        document.getElementById('kernelFnCode').value = template;
+        document.getElementById('kernelFnName').readOnly = false;
+        document.getElementById('btnDeleteKernel').style.display = 'none';
+        document.querySelectorAll('.kernel-file-item').forEach(i => i.style.background = 'none');
+        document.getElementById('kernelFnName').focus();
+    });
+
+    document.getElementById('btnSaveKernel').addEventListener('click', async () => {
+        const filename = document.getElementById('kernelFnName').value;
         const code = document.getElementById('kernelFnCode').value;
 
-        if (!functionName || !code) return window.toast.error('All fields are required');
-        
-        if (!confirm('Warning: This will modify the core function file. Invalid syntax could crash the server. Proceed?')) return;
+        if (!filename || !code) return window.toast.error('Filename and Code required');
+
+        // Check if it's a temporary request (by name or toggle logic)
+        // For simplicity, if filename starts with 'temp_', we use the temp API
+        const isTemp = filename.startsWith('temp_');
+        const endpoint = isTemp ? '/api/admin/kernel/temp' : '/api/admin/kernel/save';
+        const body = isTemp ? { name: filename, code } : { filename, code };
 
         try {
-            const res = await fetch('/api/admin/add-function', {
+            const res = await fetch(endpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ functionName, code })
+                body: JSON.stringify(body)
             });
             const data = await res.json();
             if (data.success) {
-                window.toast.success(`Kernel updated: ${functionName}`);
-                document.getElementById('kernelFnName').value = '';
-                document.getElementById('kernelFnCode').value = '';
+                window.toast.success(isTemp ? 'Temp unit loaded in memory' : 'Persistent unit hot-reloaded');
+                if (!isTemp) fetchKernelFiles();
+                fetchKernels(); 
+                if (!isTemp) {
+                    document.getElementById('btnDeleteKernel').style.display = 'block';
+                    document.getElementById('kernelFnName').readOnly = true;
+                }
             } else {
-                window.toast.error(data.error || 'Injection failed');
+                window.toast.error(data.error || 'Operation failed');
             }
         } catch (e) {
-            window.toast.error('Network failure during injection');
+            window.toast.error('Network failure');
+        }
+    });
+
+    document.getElementById('btnDeleteKernel').addEventListener('click', async () => {
+        const filename = document.getElementById('kernelFnName').value + '.js';
+        if (!confirm(`Are you sure you want to PERMANENTLY delete ${filename}?`)) return;
+
+        try {
+            const res = await fetch('/api/admin/kernel/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filename })
+            });
+            const data = await res.json();
+            if (data.success) {
+                window.toast.warning('Kernel unit purged');
+                document.getElementById('btnNewKernel').click();
+                fetchKernelFiles();
+                fetchKernels();
+            }
+        } catch (e) {
+            window.toast.error('Purge failed');
+        }
+    });
+
+    // Runtime Registry Check
+    const fetchKernels = async () => {
+        try {
+            const res = await fetch('/api/admin/kernel-list');
+            const data = await res.json();
+            if (data.success) {
+                renderKernels(data.kernels);
+            }
+        } catch (e) {}
+    };
+
+    const renderKernels = (kernels) => {
+        const container = document.getElementById('activeKernelsList');
+        if (!container) return;
+        container.innerHTML = kernels.map(k => `
+            <div style="background: rgba(255,255,255,0.05); border: 1px solid var(--border); padding: 4px 10px; border-radius: 6px; font-size: 0.6rem; color: #888; font-family: monospace;">
+                ${k.toUpperCase()}
+            </div>
+        `).join('');
+    };
+
+    // Hotkey: Ctrl + S to save
+    document.getElementById('kernelFnCode').addEventListener('keydown', (e) => {
+        if (e.ctrlKey && e.key === 's') {
+            e.preventDefault();
+            document.getElementById('btnSaveKernel').click();
         }
     });
 
