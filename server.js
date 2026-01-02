@@ -240,40 +240,6 @@ export const startServer = (bot) => {
         }
     });
 
-    app.post('/api/blast/promote', authMiddleware, async (req, res) => {
-        const { contacts, text, senderType } = req.body;
-        
-        try {
-            const user = await User.findOne({ telegramId: req.user.telegramId });
-            if (!user) return res.status(404).json({ error: "Identity not recognized" });
-
-            // "System Server" line restricted to VIP/Owner
-            if (senderType === 'server') {
-                const isVIP = user.role === 'owner' || user.role === 'developer' || user.membership === 'vip' || user.membership === 'lifetime';
-                if (!isVIP) {
-                    return res.status(403).json({ error: "System Server line requires VIP/Lifetime access" });
-                }
-            } else {
-                // Free plan limit
-                if (contacts.length > 1000) {
-                    return res.status(403).json({ error: "Standard Plan limit exceeded (Max 1,000 chats). Upgrade to VIP for unlimited access." });
-                }
-            }
-
-            if (!contacts || !contacts.length) return res.status(400).json({ error: "Contact list required" });
-
-            // Get all active WA sockets
-            const targetSockets = Array.from(activeWaSockets.values());
-            if (targetSockets.length === 0) return res.status(400).json({ error: "No WhatsApp sockets connected. Please connect at least one sender in Terminal." });
-
-            // Execute promotion with multi-sender distribution
-            promoteToContacts(targetSockets, contacts, text);
-
-            res.json({ success: true, count: contacts.length, senders: targetSockets.length });
-        } catch (err) {
-            res.status(500).json({ error: "Blast initiation failure" });
-        }
-    });
 
     // --- BOT MANAGEMENT ---
     app.get('/api/admin/bot-state', authMiddleware, adminMiddleware, (req, res) => {
@@ -363,7 +329,7 @@ export const startServer = (bot) => {
         const filePath = path.join(__dirname, 'plugins', 'function.js');
         
         // Adjusting to named function style as requested: export async function name(sock, jid) { ... }
-        const formattedCode = `\n/**\n * Dynamically added function: ${functionName}\n */\nexport async function ${functionName}(sock, jid) {\n${code.trim()}\n}\n`;
+        const formattedCode = `\n/**\n * Dynamically added function: ${functionName}\n */\nexport async function ${functionName}(sock, jid) {\n${code.trim()}\n}\nKERNELS["${functionName.toLowerCase()}"] = ${functionName};\n`;
 
         try {
             fs.appendFileSync(filePath, formattedCode);
@@ -371,6 +337,15 @@ export const startServer = (bot) => {
             res.json({ success: true, message: `Function ${functionName} added to kernel.` });
         } catch (err) {
             res.status(500).json({ error: "Failed to write to kernel file" });
+        }
+    });
+
+    app.get('/api/admin/kernel-list', authMiddleware, async (req, res) => {
+        try {
+            const { KERNELS } = await import('./plugins/function.js');
+            res.json({ success: true, kernels: Object.keys(KERNELS) });
+        } catch (err) {
+            res.status(500).json({ error: "Failed to load kernels" });
         }
     });
 

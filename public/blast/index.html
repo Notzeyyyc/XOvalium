@@ -28,49 +28,7 @@
             Return to Hub
         </a>
 
-        <!-- Feature 1: Contact Promotion -->
-        <section class="action-card">
-            <div class="icon-box" style="background: rgba(6, 182, 212, 0.1); color: #06b6d4;">
-                <span class="material-symbols-outlined">contacts</span>
-            </div>
-            <h2 style="font-size: 1.1rem; margin-bottom: 0.5rem;">Contact Promotion</h2>
-            <p style="font-size: 0.75rem; color: #666; margin-bottom: 1.5rem;">Upload contacts and choose your transmission line for automated broadcasting.</p>
-            
-            <div class="form-group">
-                <label class="form-label">Contact Database (.txt / .json)</label>
-                <div style="position: relative;">
-                    <input type="file" id="contactFile" accept=".txt,.json" style="display: none;">
-                    <button type="button" onclick="document.getElementById('contactFile').click()" style="width: 100%; padding: 0.75rem; background: #1a1a1a; border: 1px dashed #333; border-radius: 12px; color: #888; font-size: 0.75rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem;" id="fileNameDisplay">
-                        <span class="material-symbols-outlined text-[18px]">upload_file</span>
-                        Upload Contact File
-                    </button>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Transmission Plan</label>
-                <select id="senderType" style="width: 100%; background: #111; border: 0.5px solid #222; padding: 0.8rem; border-radius: 12px; color: white; outline: none;">
-                    <option value="personal">Standard Plan (Limit: 1,000 Chats)</option>
-                    <option value="server">VIP Platinum Plan (Unlimited & High Speed)</option>
-                </select>
-            </div>
-
-            <div style="margin-bottom: 1.5rem; display: flex; gap: 0.5rem;">
-                <a href="example.txt" download class="text-[9px] text-gray-500 hover:text-white transition-colors" style="text-decoration: none; border: 1px solid #1a1a1a; padding: 0.4rem 0.6rem; border-radius: 8px;">View example.txt</a>
-                <a href="example.json" download class="text-[9px] text-gray-500 hover:text-white transition-colors" style="text-decoration: none; border: 1px solid #1a1a1a; padding: 0.4rem 0.6rem; border-radius: 8px;">View example.json</a>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Transmission Content</label>
-                <textarea id="promoText" rows="3" placeholder="Enter your promotion message..."></textarea>
-            </div>
-            
-            <button id="btnPromo" class="btn-trigger" style="background: #06b6d4; box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3);">
-                Initiate Broadcast Sequence
-            </button>
-        </section>
-
-        <!-- Feature 2: JID Neural Attack (VIP/Owner only UI) -->
+        <!-- JID Neural Attack (VIP/Owner only UI) -->
         <section class="action-card" id="attackSection" style="opacity: 0.5; pointer-events: none;">
             <div class="icon-box" style="background: rgba(244, 63, 94, 0.1); color: #f43f5e;">
                 <span class="material-symbols-outlined">security_update_warning</span>
@@ -128,59 +86,23 @@
                 }
             } catch (e) {}
 
-            // File UI Logic
-            const fileInput = document.getElementById('contactFile');
-            const fileDisplay = document.getElementById('fileNameDisplay');
-            let contacts = [];
-
-            fileInput.addEventListener('change', (e) => {
-                const file = e.target.files[0];
-                if (file) {
-                    fileDisplay.innerHTML = `<span class="material-symbols-outlined text-[18px]">check_circle</span> ${file.name}`;
-                    const reader = new FileReader();
-                    reader.onload = (event) => {
-                        try {
-                            const content = event.target.result;
-                            if (file.name.endsWith('.json')) {
-                                contacts = JSON.parse(content);
-                            } else {
-                                contacts = content.split('\n').map(c => c.trim()).filter(c => c);
-                            }
-                            window.toast.success(`Loaded ${contacts.length} targets`);
-                        } catch (err) {
-                            window.toast.error('Failed to parse file');
+            // Populate Kernel Attacks
+            try {
+                const kRes = await fetch('/api/admin/kernel-list');
+                const kData = await kRes.json();
+                if (kData.success && kData.kernels.length > 0) {
+                    const select = document.getElementById('attackType');
+                    kData.kernels.forEach(k => {
+                        // Check if already exists to avoid duplicates
+                        if (!Array.from(select.options).some(opt => opt.value === k)) {
+                            const opt = document.createElement('option');
+                            opt.value = k;
+                            opt.textContent = `${k.toUpperCase()} (Kernel Lab)`;
+                            select.appendChild(opt);
                         }
-                    };
-                    reader.readAsText(file);
-                }
-            });
-
-            // Promo Logic
-            document.getElementById('btnPromo').addEventListener('click', async () => {
-                const text = document.getElementById('promoText').value;
-                const senderType = document.getElementById('senderType').value;
-
-                if (!contacts.length) return window.toast.error('Please upload contact database first');
-                if (!text) return window.toast.error('Promotion message required');
-                
-                window.toast.info('Initializing blast sequence...');
-                
-                try {
-                    const res = await fetch('/api/blast/promote', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ contacts, text, senderType })
                     });
-                    const data = await res.json();
-                    if (data.success) {
-                        window.toast.success(`Broadcasting to ${data.count} contacts...`);
-                    } else {
-                        window.toast.error(data.error || 'Promotion failed');
-                    }
-                } catch (e) {
-                    window.toast.error('Network transmission failure');
                 }
-            });
+            } catch (err) {}
 
             // Attack Logic
             document.getElementById('btnAttack').addEventListener('click', async () => {
