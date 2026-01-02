@@ -129,43 +129,73 @@
 
             <!-- Kernel Lab Tab -->
             <div id="kernel" class="tab-pane">
-                <p class="section-title">Kernel Function Injector</p>
-                <div class="card-glass" style="padding: 1rem;">
-                    <div style="display: grid; grid-template-columns: 180px 1fr; gap: 1rem; min-height: 500px;">
-                        <!-- File Browser -->
-                        <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 12px; padding: 1rem; overflow-y: auto;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                                <span style="font-size: 0.65rem; font-weight: 800; color: #666; text-transform: uppercase;">Source Units</span>
-                                <button id="btnNewKernel" class="material-symbols-outlined" style="font-size: 1.1rem; background: none; border: none; color: #5e5ce6; cursor: pointer;">add_box</button>
+                <p class="section-title">Neural Engine: Kernel Lab</p>
+                
+                <!-- Kernel Lab: IDE Environment -->
+                <div class="card-glass" style="padding: 0; min-height: 550px; display: flex; flex-direction: column; overflow: hidden; border: 1px solid rgba(255,255,255,0.05);">
+                    <!-- Header / Toolbar -->
+                    <div style="background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--border); padding: 0.75rem 1rem; display: flex; justify-content: space-between; align-items: center;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span class="material-symbols-outlined" style="color: #5e5ce6; font-size: 1.2rem;">terminal</span>
+                            <span style="font-weight: 700; font-size: 0.7rem; color: #888; text-transform: uppercase; letter-spacing: 0.05em;">Neural IDE v2.1</span>
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <button id="btnNewKernel" class="btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.6rem; background: rgba(94, 92, 230, 0.2); border: 1px solid rgba(94, 92, 230, 0.4); min-width: auto; height: auto;">
+                                <span class="material-symbols-outlined" style="font-size: 0.9rem; vertical-align: middle;">add</span> NEW UNIT
+                            </button>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 220px 1fr; flex: 1; overflow: hidden;">
+                        <!-- Sidebar: File Explorer -->
+                        <div style="background: rgba(0,0,0,0.15); border-right: 1px solid var(--border); display: flex; flex-direction: column;">
+                            <div style="padding: 0.75rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.02);">
+                                <span style="font-size: 0.6rem; color: #555; font-weight: 800; text-transform: uppercase;">File Explorer</span>
                             </div>
-                            <div id="kernelFilesList" style="display: flex; flex-direction: column; gap: 4px;">
-                                <!-- Files Go Here -->
-                                <p style="font-size: 0.65rem; color: #444; text-align: center; margin-top: 1rem;">Scanning...</p>
+                            <div id="kernelFilesList" style="flex: 1; overflow-y: auto; padding: 0.5rem;">
+                                <!-- File items injected here -->
+                                <div style="text-align: center; color: #444; font-size: 0.65rem; margin-top: 2rem;">Loading Units...</div>
                             </div>
                         </div>
 
-                        <!-- Editor Area -->
-                        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-                            <div style="display: flex; gap: 8px; align-items: center;">
-                                <input type="text" id="kernelFnName" class="form-input" placeholder="filename (e.g. protocol_kill)" style="flex: 1; margin: 0; font-family: monospace; font-size: 0.75rem; padding: 0.5rem 0.75rem;">
-                                <button class="btn-primary" id="btnSaveKernel" style="padding: 0.5rem 1rem; font-size: 0.65rem; background: #32d74b; min-width: auto; height: auto;">SAVE</button>
-                                <button class="btn-primary" id="btnDeleteKernel" style="padding: 0.5rem 1rem; font-size: 0.65rem; background: #ff375f; min-width: auto; height: auto; display: none;">DELETE</button>
-                            </div>
-                            
-                            <div style="flex: 1; min-height: 350px;">
-                                <textarea id="kernelFnCode" class="form-input" placeholder="// export async function my_unit(sock, jid) { ... }" style="width: 100%; height: 100%; background: #050505; color: #d4d4d4; font-family: monospace; font-size: 0.75rem; resize: none; margin: 0; padding: 1rem;"></textarea>
+                        <!-- Main: Editor -->
+                        <div style="display: flex; flex-direction: column; background: #050505;">
+                            <!-- Editor Control Bar -->
+                            <div style="padding: 0.5rem 1rem; background: rgba(255,255,255,0.02); display: flex; gap: 10px; align-items: center;">
+                                <div style="flex: 1; display: flex; align-items: center; gap: 8px;">
+                                    <span style="font-size: 0.65rem; color: #444; font-family: monospace;">FILENAME:</span>
+                                    <input type="text" id="kernelFnName" placeholder="unnamed_unit" style="background: none; border: none; color: #5e5ce6; font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; width: 200px; outline: none;">
+                                </div>
+                                <div id="saveStatus" style="font-size: 0.6rem; color: #32d74b; opacity: 0; transition: opacity 0.3s; display: flex; align-items: center; gap: 4px;">
+                                    <span class="material-symbols-outlined" style="font-size: 0.8rem;">check_circle</span> SAVED
+                                </div>
+                                <button id="btnSaveKernel" class="btn-primary" style="padding: 0.4rem 1rem; font-size: 0.65rem; background: #32d74b; min-width: auto; height: auto; border-radius: 6px;">SAVE UNIT</button>
+                                <button id="btnDeleteKernel" class="btn-primary" style="padding: 0.4rem 1rem; font-size: 0.65rem; background: #ff375f; min-width: auto; height: auto; border-radius: 6px; display: none;">DELETE</button>
                             </div>
 
-                            <div style="background: rgba(255,159,10,0.05); border: 1px solid rgba(255,159,10,0.2); padding: 0.6rem; border-radius: 8px;">
-                                <p style="font-size: 0.6rem; color: #ff9f0a; margin: 0;"><strong>Rule:</strong> Use <code>export async function [name](sock, jid)</code>. Filename & Function name must match.</p>
+                            <!-- Code Area -->
+                            <div style="flex: 1; position: relative; border-top: 1px solid rgba(255,255,255,0.02);">
+                                <textarea id="kernelFnCode" spellcheck="false" placeholder="// Neural Logic Unit Source" style="width: 100%; height: 100%; background: transparent; border: none; color: #d1d1d1; font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 0.8rem; padding: 1.5rem; resize: none; line-height: 1.6; outline: none;"></textarea>
+                                <div style="position: absolute; bottom: 10px; right: 15px; font-size: 0.55rem; color: #333; letter-spacing: 0.1em; pointer-events: none;">JS / MODULE / XOVALIUM</div>
                             </div>
                         </div>
                     </div>
 
-                    <div style="margin-top: 1.5rem; border-top: 1px solid var(--border); padding-top: 1.5rem;">
-                        <p class="section-title">Runtime Registry</p>
-                        <div id="activeKernelsList" style="display: flex; flex-wrap: wrap; gap: 8px;">
-                            <!-- Dynamic list -->
+                    <!-- Footer: Status Bar -->
+                    <div style="background: #0a0a0a; border-top: 1px solid var(--border); padding: 0.3rem 1rem; display: flex; justify-content: space-between; font-family: monospace; font-size: 0.55rem; color: #555;">
+                        <div style="display: flex; gap: 15px;">
+                            <span>STATUS: <span style="color: #32d74b;">READY</span></span>
+                            <span>ENGINE: <span style="color: #ff9f0a;">V2.1</span></span>
+                        </div>
+                        <div>UTF-8 | JAVASCRIPT | XOVALIUM ENGINE</div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 2rem;">
+                    <p class="section-title">Engine Runtime Registry</p>
+                    <div class="card-glass" style="padding: 1rem; background: rgba(255,255,255,0.02);">
+                        <div id="activeKernelsList" style="display: flex; flex-wrap: wrap; gap: 10px;">
+                            <!-- Active Kernel Badges -->
                         </div>
                     </div>
                 </div>

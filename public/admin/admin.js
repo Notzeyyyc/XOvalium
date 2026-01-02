@@ -1,28 +1,32 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Tab Navigation Logic
+    // --- Tab Navigation Logic ---
     const tabBtns = document.querySelectorAll('.tab-btn');
     const tabPanes = document.querySelectorAll('.tab-pane');
 
+    const switchTab = (tabId) => {
+        // UI Feedback
+        tabBtns.forEach(b => {
+            const isActive = b.getAttribute('data-tab') === tabId;
+            b.classList.toggle('active', isActive);
+        });
+        tabPanes.forEach(p => {
+            p.classList.toggle('active', p.id === tabId);
+        });
+
+        // Trigger data load
+        if (tabId === 'membership') fetchUsers();
+        if (tabId === 'overview') fetchStats();
+        if (tabId === 'notifications') fetchCurrentNotif();
+        if (tabId === 'terminal') fetchBotState();
+        if (tabId === 'kernel') {
+            fetchKernels();
+            fetchKernelFiles();
+        }
+    };
+
     tabBtns.forEach(btn => {
         btn.addEventListener('click', () => {
-            const tabId = btn.getAttribute('data-tab');
-            
-            // UI Feedback
-            tabBtns.forEach(b => b.classList.remove('active'));
-            tabPanes.forEach(p => p.classList.remove('active'));
-            
-            btn.classList.add('active');
-            document.getElementById(tabId).classList.add('active');
-
-            // Trigger data load
-            if (tabId === 'membership') fetchUsers();
-            if (tabId === 'overview') fetchStats();
-            if (tabId === 'notifications') fetchCurrentNotif();
-            if (tabId === 'terminal') fetchBotState();
-            if (tabId === 'kernel') {
-                fetchKernels();
-                fetchKernelFiles();
-            }
+            switchTab(btn.getAttribute('data-tab'));
         });
     });
 
@@ -123,11 +127,13 @@ document.addEventListener('DOMContentLoaded', () => {
         logs.scrollTop = logs.scrollHeight;
     };
 
-    // Auto-refresh bot state
+    // Auto-refresh bot state (Aggressive polling for Pairing Code)
     setInterval(() => {
-        const activeTab = document.querySelector('.tab-btn.active').dataset.tab;
-        if (activeTab === 'terminal') fetchBotState();
-    }, 5000);
+        const activeTabEl = document.querySelector('.tab-btn.active');
+        if (activeTabEl && activeTabEl.dataset.tab === 'terminal') {
+            fetchBotState();
+        }
+    }, 1000);
 
     // --- Overview & System Pulse ---
     let healthChart;
@@ -282,90 +288,118 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- Kernel Lab Logic (File Manager Edition) ---
+    // --- Neural IDE: Kernel Lab Logic (v2.1) ---
     const fetchKernelFiles = async () => {
+        const container = document.getElementById('kernelFilesList');
+        if (!container) return;
+        
         try {
             const res = await fetch('/api/admin/kernel/files');
+            if (!res.ok) throw new Error(`Engine HTTP ${res.status}`);
+            
             const data = await res.json();
             if (data.success) {
-                renderKernelFiles(data.files);
+                const sortedFiles = data.files.sort((a, b) => a.localeCompare(b));
+                renderKernelFiles(sortedFiles);
+            } else {
+                throw new Error(data.error || 'Registry fault');
             }
-        } catch (e) {}
+        } catch (e) {
+            console.error('Failed to sync engine units:', e);
+            container.innerHTML = `<div style="text-align: center; color: #ff375f; font-size: 0.6rem; margin-top: 2rem; padding: 0 1rem;">
+                <span class="material-symbols-outlined" style="font-size: 1.5rem; display: block; margin-bottom: 5px;">error</span>
+                SYNC ERROR: ${e.message}
+            </div>`;
+        }
     };
 
     const renderKernelFiles = (files) => {
         const container = document.getElementById('kernelFilesList');
         if (!container) return;
         
-        if (files.length === 0) {
-            container.innerHTML = '<p style="font-size: 0.6rem; color: #444; text-align: center; margin-top: 1rem;">No custom units</p>';
+        if (!files || files.length === 0) {
+            container.innerHTML = `
+                <div style="text-align: center; color: #444; font-size: 0.6rem; margin-top: 2rem;">
+                    <span class="material-symbols-outlined" style="font-size: 1.5rem; display: block; margin-bottom: 5px;">folder_open</span>
+                    EMPTY REGISTRY
+                </div>`;
             return;
         }
 
-        container.innerHTML = files.map(file => `
-            <div class="kernel-file-item" data-file="${file}" style="padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 0.7rem; color: #888; font-family: monospace; transition: all 0.2s; display: flex; align-items: center; gap: 8px;">
-                <span class="material-symbols-outlined" style="font-size: 0.9rem;">javascript</span>
-                <span style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${file}</span>
-            </div>
-        `).join('');
+        const currentlyOpen = (document.getElementById('kernelFnName').value || '') + '.js';
+
+        container.innerHTML = files.map(file => {
+            const isActive = file === currentlyOpen;
+            return `
+                <div class="kernel-file-item" data-file="${file}" style="padding: 10px 12px; border-radius: 8px; cursor: pointer; font-size: 0.65rem; color: ${isActive ? '#5e5ce6' : '#888'}; font-family: 'JetBrains Mono', monospace; transition: all 0.2s; display: flex; align-items: center; gap: 10px; background: ${isActive ? 'rgba(94, 92, 230, 0.1)' : 'transparent'}; margin-bottom: 2px; border: 1px solid ${isActive ? 'rgba(94, 92, 230, 0.2)' : 'transparent'};">
+                    <span class="material-symbols-outlined" style="font-size: 1rem; opacity: 0.7;">${file.startsWith('temp_') ? 'memory' : 'javascript'}</span>
+                    <span style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${file.replace('.js', '')}</span>
+                    ${isActive ? '<div style="width: 4px; height: 4px; background: #5e5ce6; border-radius: 50%;"></div>' : ''}
+                </div>
+            `;
+        }).join('');
 
         // Selection Logic
         document.querySelectorAll('.kernel-file-item').forEach(item => {
             item.addEventListener('click', () => {
-                document.querySelectorAll('.kernel-file-item').forEach(i => i.style.background = 'none');
-                item.style.background = 'rgba(94, 92, 230, 0.1)';
-                item.style.color = '#5e5ce6';
                 loadKernelFile(item.dataset.file);
             });
         });
     };
 
     const loadKernelFile = async (filename) => {
-        window.toast.info(`Opening ${filename}...`);
+        const editor = document.getElementById('kernelFnCode');
+        const nameInput = document.getElementById('kernelFnName');
+        const deleteBtn = document.getElementById('btnDeleteKernel');
+        
+        window.toast.info(`Retrieving Unit: ${filename}`);
         try {
             const res = await fetch(`/api/admin/kernel/read/${filename}`);
             const data = await res.json();
             if (data.success) {
-                document.getElementById('kernelFnName').value = filename.replace('.js', '');
-                document.getElementById('kernelFnCode').value = data.content;
-                document.getElementById('btnDeleteKernel').style.display = 'block';
-                document.getElementById('kernelFnName').readOnly = true;
+                nameInput.value = filename.replace('.js', '');
+                editor.value = data.content;
+                deleteBtn.style.display = 'block';
+                nameInput.readOnly = true;
+                
+                // Re-render to show active state
+                fetchKernelFiles();
             }
         } catch (e) {
-            window.toast.error('Failed to read unit');
+            window.toast.error('Unit retrieval failed (Engine Fault)');
         }
     };
 
     document.getElementById('btnNewKernel').addEventListener('click', () => {
-        const template = `export const version = "1.0.0";
-export const hash = "SIG_${Math.random().toString(36).substring(7).toUpperCase()}";
+        const sig = Math.random().toString(36).substring(7).toUpperCase();
+        const template = `export const version = "1.1.0";
+export const hash = "SIG_${sig}";
 
 /**
- * Custom Attack Unit
+ * Neural Attack Module: [Custom Name]
+ * Compiled for Xovalium Engine v2.1
  */
-export async function my_unit(sock, jid) {
-    // Write your logic here
-    await sock.sendMessage(jid, { text: 'XOVALIUM MODULE EXECUTED' });
+export async function custom_attack(sock, jid) {
+    // Protocol Implementation
+    await sock.sendMessage(jid, { text: 'SYSTEM RECALIBRATION: UNIT_${sig}' });
 }`;
         document.getElementById('kernelFnName').value = '';
         document.getElementById('kernelFnCode').value = template;
         document.getElementById('kernelFnName').readOnly = false;
         document.getElementById('btnDeleteKernel').style.display = 'none';
-        document.querySelectorAll('.kernel-file-item').forEach(i => i.style.background = 'none');
         document.getElementById('kernelFnName').focus();
+        fetchKernelFiles(); // Deselect others
     });
 
     document.getElementById('btnSaveKernel').addEventListener('click', async () => {
-        const filename = document.getElementById('kernelFnName').value;
+        const filenameSource = document.getElementById('kernelFnName').value.trim();
         const code = document.getElementById('kernelFnCode').value;
 
-        if (!filename || !code) return window.toast.error('Filename and Code required');
+        if (!filenameSource || !code) return window.toast.error('Definition incomplete');
 
-        // Check if it's a temporary request (by name or toggle logic)
-        // For simplicity, if filename starts with 'temp_', we use the temp API
-        const isTemp = filename.startsWith('temp_');
+        const isTemp = filenameSource.startsWith('temp_');
         const endpoint = isTemp ? '/api/admin/kernel/temp' : '/api/admin/kernel/save';
-        const body = isTemp ? { name: filename, code } : { filename, code };
+        const body = isTemp ? { name: filenameSource, code } : { filename: filenameSource + '.js', code };
 
         try {
             const res = await fetch(endpoint, {
@@ -375,24 +409,32 @@ export async function my_unit(sock, jid) {
             });
             const data = await res.json();
             if (data.success) {
-                window.toast.success(isTemp ? 'Temp unit loaded in memory' : 'Persistent unit hot-reloaded');
-                if (!isTemp) fetchKernelFiles();
-                fetchKernels(); 
+                window.toast.success('Unit Compiled & Synchronized');
+                
+                // Show "SAVED" notification in IDE
+                const status = document.getElementById('saveStatus');
+                status.style.opacity = '1';
+                setTimeout(() => status.style.opacity = '0', 2000);
+
                 if (!isTemp) {
-                    document.getElementById('btnDeleteKernel').style.display = 'block';
                     document.getElementById('kernelFnName').readOnly = true;
+                    document.getElementById('btnDeleteKernel').style.display = 'block';
+                    fetchKernelFiles();
                 }
+                
+                // CRITICAL: Refresh registry and neural attack options
+                fetchKernels(); 
             } else {
-                window.toast.error(data.error || 'Operation failed');
+                window.toast.error(data.error || 'Compilation Error');
             }
         } catch (e) {
-            window.toast.error('Network failure');
+            window.toast.error('Network failure during sync');
         }
     });
 
     document.getElementById('btnDeleteKernel').addEventListener('click', async () => {
         const filename = document.getElementById('kernelFnName').value + '.js';
-        if (!confirm(`Are you sure you want to PERMANENTLY delete ${filename}?`)) return;
+        if (!confirm(`PURGE UNIT: ${filename}?\nThis action cannot be undone.`)) return;
 
         try {
             const res = await fetch('/api/admin/kernel/delete', {
@@ -402,17 +444,17 @@ export async function my_unit(sock, jid) {
             });
             const data = await res.json();
             if (data.success) {
-                window.toast.warning('Kernel unit purged');
+                window.toast.warning('Unit Purged from Storage');
                 document.getElementById('btnNewKernel').click();
                 fetchKernelFiles();
                 fetchKernels();
             }
         } catch (e) {
-            window.toast.error('Purge failed');
+            window.toast.error('Purge transaction failed');
         }
     });
 
-    // Runtime Registry Check
+    // --- Engine Runtime Registry Logic ---
     const fetchKernels = async () => {
         try {
             const res = await fetch('/api/admin/kernel-list');
@@ -426,18 +468,28 @@ export async function my_unit(sock, jid) {
     const renderKernels = (kernels) => {
         const container = document.getElementById('activeKernelsList');
         if (!container) return;
+        
+        if (kernels.length === 0) {
+            container.innerHTML = '<span style="color: #444; font-size: 0.65rem;">Registry Empty</span>';
+            return;
+        }
+
         container.innerHTML = kernels.map(k => `
-            <div style="background: rgba(255,255,255,0.05); border: 1px solid var(--border); padding: 4px 10px; border-radius: 6px; font-size: 0.6rem; color: #888; font-family: monospace;">
+            <div style="background: rgba(94, 92, 230, 0.05); border: 1px solid rgba(94, 92, 230, 0.2); padding: 5px 12px; border-radius: 6px; font-size: 0.65rem; color: #5e5ce6; font-family: 'JetBrains Mono', monospace; display: flex; align-items: center; gap: 6px;">
+                <div style="width: 5px; height: 5px; background: #32d74b; border-radius: 50%; box-shadow: 0 0 5px #32d74b;"></div>
                 ${k.toUpperCase()}
             </div>
         `).join('');
     };
 
     // Hotkey: Ctrl + S to save
-    document.getElementById('kernelFnCode').addEventListener('keydown', (e) => {
+    document.addEventListener('keydown', (e) => {
         if (e.ctrlKey && e.key === 's') {
-            e.preventDefault();
-            document.getElementById('btnSaveKernel').click();
+            const activeTab = document.querySelector('.tab-pane.active');
+            if (activeTab && activeTab.id === 'kernel') {
+                e.preventDefault();
+                document.getElementById('btnSaveKernel').click();
+            }
         }
     });
 
@@ -458,5 +510,7 @@ export async function my_unit(sock, jid) {
         }
     }, 4000);
 
-    fetchStats();
+    // Initial Pulse
+    const activeTab = document.querySelector('.tab-btn.active')?.dataset.tab || 'overview';
+    switchTab(activeTab);
 });

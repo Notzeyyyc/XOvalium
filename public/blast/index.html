@@ -33,32 +33,57 @@
             <img src="/assets/banner.jpg" alt="Hero" style="width: 100%; height: 180px; object-fit: cover; display: block;">
         </div>
 
-        <!-- JID Neural Attack (VIP/Owner only UI) -->
-        <section class="action-card" id="attackSection" style="opacity: 0.5; pointer-events: none;">
-            <div class="icon-box" style="background: rgba(244, 63, 94, 0.1); color: #f43f5e;">
-                <span class="material-symbols-outlined">security_update_warning</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                <h2 style="font-size: 1.1rem;">Neural Attack</h2>
-                <span id="accessTag" style="font-size: 0.6rem; background: #222; padding: 0.2rem 0.5rem; border-radius: 4px; color: #888;">LOCKED</span>
-            </div>
-            <p style="font-size: 0.75rem; color: #666; margin-bottom: 1.5rem;">High-intensity data burst targeted at a specific JID identifier.</p>
-            
-            <div class="form-group">
-                <label class="form-label">Target</label>
-                <input type="text" id="targetJid" placeholder="example: 628xxx">
-            </div>
-            <div class="form-group">
-                <label class="form-label">Attack Vector</label>
-                <div style="display: flex; gap: 8px;">
-                    <select id="attackType" style="flex: 2; background: #111; border: 0.5px solid #222; padding: 0.8rem; border-radius: 12px; color: white; outline: none;">
-                        <option value="" disabled selected>Select Kernel...</option>
-                    </select>
-                    <input type="number" id="attackAmount" value="10" placeholder="Qty" style="flex: 1; text-align: center;">
+        <!-- Neural Attack Board -->
+        <section class="action-card" id="attackSection" style="opacity: 0.5; pointer-events: none; padding: 1.5rem; border: 1px solid rgba(255,255,255,0.05); background: rgba(10,10,10,0.4);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div class="icon-box" style="background: rgba(94, 92, 230, 0.1); color: #5e5ce6; margin: 0; width: 40px; height: 40px;">
+                        <span class="material-symbols-outlined" style="font-size: 1.2rem;">bolt</span>
+                    </div>
+                    <div>
+                        <h2 style="font-size: 1rem; font-weight: 800; letter-spacing: 0.02em;">NEURAL ATTACK</h2>
+                        <p style="font-size: 0.6rem; color: #555; text-transform: uppercase; font-family: monospace;">Protocol: Xovalium v2.1</p>
+                    </div>
                 </div>
+                <div id="accessTag" style="font-size: 0.55rem; background: rgba(255,55,95,0.1); border: 1px solid rgba(255,55,95,0.2); padding: 0.3rem 0.6rem; border-radius: 4px; color: #ff375f; font-weight: 700; font-family: monospace;">LOCKED</div>
             </div>
             
-            <button id="btnAttack" class="btn-trigger">Execute Sequence</button>
+            <div style="display: grid; gap: 1.25rem;">
+                <div class="form-group">
+                    <label class="form-label" style="font-size: 0.65rem; color: #777; font-family: monospace;">TARGET IDENTIFIER (@JID)</label>
+                    <input type="text" id="targetJid" placeholder="e.g. 628xxx" style="background: rgba(255,255,255,0.02); border: 1px solid var(--border); padding: 0.8rem 1rem; border-radius: 12px; color: white; width: 100%; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem;">
+                </div>
+
+                <div class="form-group">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <label class="form-label" style="font-size: 0.65rem; color: #777; font-family: monospace; margin: 0;">ATTACK VECTOR</label>
+                        <button id="btnRefreshKernels" style="background: none; border: none; color: #5e5ce6; font-size: 0.6rem; font-family: monospace; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                            <span class="material-symbols-outlined" style="font-size: 0.8rem;">sync</span> REFRESH
+                        </button>
+                    </div>
+                    <select id="attackType" style="width: 100%; background: rgba(255,255,255,0.02); border: 1px solid var(--border); padding: 0.8rem 1rem; border-radius: 12px; color: white; appearance: none; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;">
+                        <option value="">SCANNING ENGINE...</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <label class="form-label" style="font-size: 0.65rem; color: #777; font-family: monospace; margin: 0;">SEQUENCE ITERATION</label>
+                        <span id="amountDisplay" style="font-size: 0.75rem; color: #5e5ce6; font-family: 'JetBrains Mono', monospace; font-weight: 800;">10</span>
+                    </div>
+                    <input type="range" id="attackAmount" min="1" max="100" value="10" style="width: 100%; accent-color: #5e5ce6; background: rgba(255,255,255,0.05); height: 4px; border-radius: 2px; cursor: pointer;">
+                </div>
+
+                <button class="btn-primary" id="btnAttack" style="background: linear-gradient(135deg, #5e5ce6, #af52de); padding: 1rem; margin-top: 1rem; border: none; font-weight: 800; letter-spacing: 0.1em; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                    <span class="material-symbols-outlined">rocket_launch</span>
+                    EXECUTE SEQUENCE
+                </button>
+            </div>
+
+            <div style="margin-top: 1.5rem; padding: 0.75rem; background: rgba(50, 215, 75, 0.05); border: 1px solid rgba(50, 215, 75, 0.1); border-radius: 10px; display: flex; align-items: center; gap: 10px;">
+                <div style="width: 6px; height: 6px; background: #32d74b; border-radius: 50%; box-shadow: 0 0 8px #32d74b;"></div>
+                <span style="font-size: 0.6rem; color: #32d74b; font-family: monospace; letter-spacing: 0.05em;">ENGINE STATUS: NOMINAL</span>
+            </div>
         </section>
     </main>
 
@@ -77,43 +102,68 @@
                     if (isPrivileged) {
                         const section = document.getElementById('attackSection');
                         section.style.opacity = '1';
-                        section.style.pointer_events = 'auto';
-                        document.getElementById('accessTag').textContent = 'READY';
-                        document.getElementById('accessTag').style.color = '#f43f5e';
-                        document.getElementById('accessTag').style.background = 'rgba(244, 63, 94, 0.1)';
                         section.style.pointerEvents = 'auto';
+                        document.getElementById('accessTag').textContent = 'READY';
+                        document.getElementById('accessTag').style.color = '#32d74b';
+                        document.getElementById('accessTag').style.background = 'rgba(50, 215, 75, 0.1)';
+                        document.getElementById('accessTag').style.borderColor = 'rgba(50, 215, 75, 0.2)';
+                        document.getElementById('targetJid').focus();
                     }
                 }
             } catch (e) {}
 
-            // Populate Kernel Attacks
-            try {
-                const kRes = await fetch('/api/admin/kernel-list');
-                const kData = await kRes.json();
-                if (kData.success && kData.kernels.length > 0) {
-                    const select = document.getElementById('attackType');
-                    kData.kernels.forEach(k => {
-                        // Check if already exists to avoid duplicates
-                        if (!Array.from(select.options).some(opt => opt.value === k)) {
+            const fetchKernels = async () => {
+                const select = document.getElementById('attackType');
+                select.innerHTML = '<option value="" disabled selected>SYNCHRONIZING...</option>';
+                
+                try {
+                    const res = await fetch('/api/admin/kernel-list');
+                    const data = await res.json();
+                    if (data.success && data.kernels) {
+                        select.innerHTML = '<option value="" disabled selected>SELECT VECTOR UNIT</option>';
+                        data.kernels.forEach(k => {
                             const opt = document.createElement('option');
                             opt.value = k;
-                            opt.textContent = `${k.toUpperCase()} (Kernel Lab)`;
+                            opt.textContent = `${k.toUpperCase()} (Engine Unit)`;
                             select.appendChild(opt);
-                        }
-                    });
+                        });
+                    }
+                } catch (err) {
+                    select.innerHTML = '<option value="">FAULT: ENGINE SYNC ERROR</option>';
                 }
-            } catch (err) {}
+            };
+
+            // Range Slider logic
+            const range = document.getElementById('attackAmount');
+            const display = document.getElementById('amountDisplay');
+            range.addEventListener('input', () => {
+                display.textContent = range.value;
+            });
+
+            // Initial fetch
+            fetchKernels();
+
+            // Refresh button
+            document.getElementById('btnRefreshKernels').addEventListener('click', (e) => {
+                e.preventDefault();
+                fetchKernels();
+                window.toast.info('Neural registry refreshed');
+            });
 
             // Attack Logic
             document.getElementById('btnAttack').addEventListener('click', async () => {
-                const jid = document.getElementById('targetJid').value;
+                const jid = document.getElementById('targetJid').value.trim();
                 const type = document.getElementById('attackType').value;
-                const amount = document.getElementById('attackAmount').value || 10;
+                const amount = range.value;
                 
-                if (!jid) return window.toast.error('Target JID required');
+                if (!jid) return window.toast.error('Identity required');
+                if (!type) return window.toast.error('Select attack vector');
                 
-                window.toast.warning('Executing neural sequence...');
-                
+                const btn = document.getElementById('btnAttack');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<span class="material-symbols-outlined animate-spin">sync</span> INITIATING...';
+                btn.disabled = true;
+
                 try {
                     const res = await fetch('/api/blast/attack', {
                         method: 'POST',
@@ -122,12 +172,15 @@
                     });
                     const data = await res.json();
                     if (data.success) {
-                        window.toast.success('Sequence completed successfully');
+                        window.toast.success('Sequence execution confirmed');
                     } else {
-                        window.toast.error(data.error || 'Sequence failed');
+                        window.toast.error(data.error || 'Interface Rejection');
                     }
                 } catch (e) {
-                    window.toast.error('Local kernel sync error');
+                    window.toast.error('Fatal: Core connection lost');
+                } finally {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
                 }
             });
         });

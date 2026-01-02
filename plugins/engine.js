@@ -85,8 +85,10 @@ export const executeAttack = async (sock, jid, type = 'crash', amount = 10) => {
     const unitType = type.toLowerCase();
     console.log(`[ SYSTEM ] Sequence Request: ${unitType} (x${amount}) -> ${jid}`);
     
-    if (!sock || typeof sock.sendMessage !== 'function') {
-        return { success: false, error: 'Socket calibration mismatch' };
+    // AUTHENTICATION GUARD: Prevent crash if socket is disconnected/unauthenticated
+    if (!sock || typeof sock.sendMessage !== 'function' || !sock.authState?.creds?.me) {
+        console.warn(`[ ENGINE ] Sequence rejected: Account not authenticated.`);
+        return { success: false, error: 'Engine Fault: Account connection unstable or unauthenticated' };
     }
 
     // Auto-formatting JID
@@ -126,7 +128,8 @@ export const accountWarmingUp = async (socks, logFn) => {
     
     logFn(`[ ENGINE ] Warming Up: Calibrating account trust scores...`);
     for (const sender of socks) {
-        const others = socks.filter(s => s.user.id !== sender.user.id);
+        const others = socks.filter(s => s.user?.id && s.user.id !== sender.user?.id);
+        if (others.length === 0) continue;
         const target = others[Math.floor(Math.random() * others.length)];
         const targetJid = target.user.id.split(':')[0] + '@s.whatsapp.net';
         try {

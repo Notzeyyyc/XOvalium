@@ -32,12 +32,20 @@ const activeWaSockets = new Map();
 
 const updateSessionState = (sid, status, code = null) => {
     botState.sessions[sid] = { state: status, pairingCode: code };
-    // Maintain legacy fields for current pairing session
-    if (status === 'connecting' || status === 'error') {
+    
+    // BROADCAST: Sync to global fields for the UI to pick up the active request
+    if (code || status === 'connecting' || status === 'error') {
         botState.state = status;
         botState.pairingCode = code;
         botState.sessionId = sid;
     }
+
+    // Force 'connected' state globally if any session is connected
+    const anyConnected = Object.values(botState.sessions).some(s => s.state === 'connected');
+    if (anyConnected && status !== 'connecting') {
+        botState.state = 'connected';
+    }
+
     botState.totalActive = activeWaSockets.size;
 };
 
@@ -270,13 +278,19 @@ export const startServer = (bot) => {
             updateSessionState(sessionId, 'connecting', "Pending...");
             pushLog(`Starting connection: ${cleanedNumber}`);
             
-            connectToWhatsApp(sessionId, cleanedNumber, (code) => {
-                updateSessionState(sessionId, 'connecting', code);
-                pushLog(`PAIRING [${cleanedNumber}]: ${code}`);
+            connectToWhatsApp(sessionId, cleanedNumber, (type, data) => {
+                if (type === 'pairing') {
+                    updateSessionState(sessionId, 'connecting', data);
+                    pushLog(`PAIRING [${cleanedNumber}]: ${data}`);
+                } else if (type === 'open') {
+                    updateSessionState(sessionId, 'connected', null);
+                    pushLog(`CONNECTED: ${cleanedNumber}`);
+                } else if (type === 'close') {
+                    updateSessionState(sessionId, 'disconnected', null);
+                    pushLog(`DISCONNECTED [${cleanedNumber}]: ${data.shouldReconnect ? 'Reconnecting...' : 'Terminated'}`);
+                }
             }).then((sock) => {
                 activeWaSockets.set(sessionId, sock);
-                updateSessionState(sessionId, 'connected', null);
-                pushLog(`CONNECTED: ${cleanedNumber}`);
             }).catch(e => {
                 updateSessionState(sessionId, 'error', null);
                 pushLog(`FAILED [${cleanedNumber}]: ${e.message}`);
